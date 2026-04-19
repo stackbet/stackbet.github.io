@@ -1,0 +1,219 @@
+/* ═══════════════════════════════════════════════════════════
+   admin.css  —  Admin cheat-menu overlay
+   Only loaded on pages where the admin system is active.
+═══════════════════════════════════════════════════════════ */
+
+/* ── BACKDROP ── */
+.adm-backdrop {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0, 0, 0, .65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .22s ease;
+}
+.adm-backdrop.open {
+  opacity: 1; pointer-events: all;
+}
+
+/* ── PANEL ── */
+.adm-panel {
+  width: 580px; max-width: 96vw;
+  max-height: 82vh;
+  background: var(--bg2);
+  border: 1px solid var(--bdr);
+  border-radius: 16px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(34,197,94,.08);
+  transform: scale(.93) translateY(10px);
+  transition: transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+.adm-backdrop.open .adm-panel {
+  transform: scale(1) translateY(0);
+}
+
+/* ── HEADER ── */
+.adm-header {
+  padding: 16px 20px 0;
+  border-bottom: 1px solid var(--bdr);
+  flex-shrink: 0;
+}
+.adm-title-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.adm-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 800; letter-spacing: 2.5px;
+  color: var(--green); text-transform: uppercase;
+}
+.adm-title svg { flex-shrink: 0; }
+.adm-close {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: none; border: 1px solid var(--bdr);
+  color: var(--muted); font-size: 16px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: .14s; cursor: pointer;
+}
+.adm-close:hover { background: var(--bg3); color: var(--text); border-color: var(--muted); }
+
+/* ── SECTION TABS ── */
+.adm-tabs {
+  display: flex; gap: 4px; padding-bottom: 0;
+}
+.adm-tab {
+  padding: 8px 16px; border-radius: 8px 8px 0 0;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  background: none; border: none; cursor: pointer; transition: .14s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.adm-tab:hover { color: var(--text); }
+.adm-tab.active {
+  color: var(--green);
+  border-bottom-color: var(--green);
+  background: rgba(34,197,94,.06);
+}
+
+/* ── BODY ── */
+.adm-body {
+  flex: 1; overflow-y: auto; padding: 20px;
+}
+
+/* ── SECTION PANELS ── */
+.adm-section { display: none; }
+.adm-section.active { display: block; }
+
+/* ── SEARCH BAR ── */
+.adm-search {
+  width: 100%; height: 40px;
+  background: var(--bg3); border: 1px solid var(--bdr);
+  border-radius: 8px; color: var(--text); font-size: 14px;
+  padding: 0 14px; outline: none; margin-bottom: 14px;
+  transition: .18s;
+}
+.adm-search:focus { border-color: var(--green); }
+.adm-search::placeholder { color: var(--muted); }
+
+/* ── PLAYER LIST ── */
+.adm-player-list { display: flex; flex-direction: column; gap: 6px; }
+.adm-player-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; border-radius: 10px;
+  background: var(--bg3); border: 1px solid var(--bdr);
+  cursor: pointer; transition: .15s;
+}
+.adm-player-row:hover { border-color: var(--green); background: rgba(34,197,94,.06); }
+.adm-player-av {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--bg2); border: 1px solid var(--bdr);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--green); flex-shrink: 0;
+  overflow: hidden;
+}
+.adm-player-av img { width: 100%; height: 100%; object-fit: cover; }
+.adm-player-name { font-size: 14px; font-weight: 600; flex: 1; }
+.adm-player-bal  { font-size: 14px; font-weight: 700; color: var(--green); }
+.adm-player-arrow { color: var(--muted); font-size: 16px; }
+.adm-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+
+/* ── PLAYER DETAIL ── */
+.adm-back {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--muted); font-size: 13px; font-weight: 600;
+  background: none; border: none; cursor: pointer; margin-bottom: 20px;
+  transition: color .14s;
+}
+.adm-back:hover { color: var(--text); }
+.adm-back svg { transition: transform .14s; }
+.adm-back:hover svg { transform: translateX(-3px); }
+
+.adm-detail-header {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 22px;
+}
+.adm-detail-av {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--bg3); border: 2px solid var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: var(--green); overflow: hidden;
+}
+.adm-detail-av img { width: 100%; height: 100%; object-fit: cover; }
+.adm-detail-name { font-size: 20px; font-weight: 800; }
+.adm-detail-id   { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+.adm-stat-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: 10px;
+  background: var(--bg3); border: 1px solid var(--bdr); margin-bottom: 16px;
+}
+.adm-stat-label { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--muted); flex: 1; }
+.adm-stat-val   { font-size: 22px; font-weight: 800; color: var(--green); }
+
+/* ── SET BALANCE ROW ── */
+.adm-set-row {
+  display: flex; gap: 8px; margin-bottom: 24px;
+}
+.adm-num-input {
+  flex: 1; height: 44px;
+  background: var(--bg3); border: 1px solid var(--bdr);
+  border-radius: 8px; color: var(--text); font-size: 15px; font-weight: 600;
+  padding: 0 14px; outline: none; transition: .18s;
+}
+.adm-num-input:focus { border-color: var(--green); }
+.adm-btn-set {
+  height: 44px; padding: 0 20px;
+  background: var(--green); border: none; border-radius: 8px;
+  color: #000; font-size: 14px; font-weight: 800; transition: .14s;
+}
+.adm-btn-set:hover { background: var(--green2); }
+
+/* ── DANGER BUTTONS ── */
+.adm-danger-zone {
+  border-top: 1px solid var(--bdr); padding-top: 18px; margin-top: 4px;
+}
+.adm-danger-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  color: var(--red); margin-bottom: 10px;
+}
+.adm-danger-btns { display: flex; flex-direction: column; gap: 8px; }
+.adm-btn-danger {
+  width: 100%; height: 42px;
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.35);
+  border-radius: 8px; color: var(--red); font-size: 13px; font-weight: 700;
+  transition: .14s; cursor: pointer;
+}
+.adm-btn-danger:hover { background: rgba(239,68,68,.2); border-color: var(--red); }
+
+/* ── LOADING SPINNER ── */
+.adm-loading {
+  display: flex; align-items: center; justify-content: center;
+  padding: 32px; color: var(--muted); font-size: 13px; gap: 10px;
+}
+.adm-spinner {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--bdr); border-top-color: var(--green);
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── SHORTCUT HINT ── */
+.adm-hint {
+  position: fixed; bottom: 18px; right: 18px; z-index: 8999;
+  background: var(--bg2); border: 1px solid var(--bdr);
+  border-radius: 8px; padding: 7px 12px;
+  font-size: 11px; color: var(--muted); pointer-events: none;
+  opacity: 0; animation: hintFade 4s ease forwards;
+}
+@keyframes hintFade {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.adm-hint kbd {
+  background: var(--bg3); border: 1px solid var(--bdr);
+  border-radius: 4px; padding: 1px 5px; font-size: 10px;
+  font-family: 'DM Mono', monospace; color: var(--text);
+}

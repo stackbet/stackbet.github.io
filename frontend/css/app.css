@@ -1,0 +1,180 @@
+/* ── SIDEBAR WIDTHS ── */
+:root {
+  --sb-wide:   220px;
+  --sb-narrow: 60px;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sb-wide);
+  height: 100vh;
+  position: fixed; top: 0; left: 0; z-index: 100;
+  background: var(--bg2); border-right: 1px solid var(--bdr);
+  display: flex; flex-direction: column;
+  transition: width .25s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}
+
+/* Collapsed state — set by JS on load and on hamburger click */
+.sidebar.collapsed {
+  width: var(--sb-narrow);
+}
+
+/* ── SIDEBAR HEADER (hamburger + logo) ── */
+.sb-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 13px; height: 56px; flex-shrink: 0;
+  border-bottom: 1px solid var(--bdr);
+  overflow: hidden;
+}
+
+/* Hamburger button */
+.hamburger {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: none; border: none;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 5px;
+  cursor: pointer; flex-shrink: 0;
+  transition: background .15s, transform .15s;
+}
+.hamburger:hover { background: var(--bg3); }
+.hamburger:active { transform: scale(.88); }
+.hamburger span {
+  display: block; width: 18px; height: 2px;
+  background: var(--text); border-radius: 2px;
+  transition: .2s;
+}
+
+.sb-logo-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px; letter-spacing: 1px;
+  white-space: nowrap;
+  opacity: 1; transition: opacity .2s;
+}
+.sidebar.collapsed .sb-logo-name { opacity: 0; pointer-events: none; }
+
+/* ── NAV LINKS ── */
+.nav { flex: 1; padding: 10px 8px; overflow-y: auto; overflow-x: hidden; }
+.nav-link {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 11px; border-radius: 8px;
+  font-size: 14px; font-weight: 500; color: #94a3b8;
+  transition: background .14s, color .14s; margin-bottom: 2px;
+  width: 100%; border: none; background: none; cursor: pointer;
+  text-decoration: none; white-space: nowrap; overflow: hidden;
+}
+.nav-link img { width: 17px; height: 17px; opacity: .55; flex-shrink: 0; transition: opacity .14s; }
+.nav-link span { transition: opacity .2s; }
+.sidebar.collapsed .nav-link span { opacity: 0; }
+.nav-link:hover  { background: var(--bg3); color: var(--text); }
+.nav-link:hover img { opacity: .85; }
+.nav-link.active { background: rgba(34,197,94,.12); color: var(--green); }
+.nav-link.active img { opacity: 1; filter: invert(64%) sepia(98%) saturate(400%) hue-rotate(94deg) brightness(1.1); }
+
+/* Tooltip on hover when collapsed */
+.sidebar.collapsed .nav-link { position: relative; }
+.sidebar.collapsed .nav-link::after {
+  content: attr(data-label);
+  position: absolute; left: calc(var(--sb-narrow) - 8px);
+  background: var(--bg3); color: var(--text);
+  font-size: 12px; font-weight: 600;
+  padding: 5px 10px; border-radius: 6px;
+  border: 1px solid var(--bdr);
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; transform: translateX(-4px);
+  transition: opacity .15s, transform .15s;
+  z-index: 200;
+}
+.sidebar.collapsed .nav-link:hover::after {
+  opacity: 1; transform: translateX(0);
+}
+
+/* ── SIDEBAR USER ── */
+.sb-user {
+  padding: 12px 13px; border-top: 1px solid var(--bdr);
+  display: flex; align-items: center; gap: 10px;
+  overflow: hidden; flex-shrink: 0;
+}
+.js-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--bg3);
+  border: 1px solid var(--bdr); display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--green); overflow: hidden; flex-shrink: 0;
+}
+.js-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sb-uname {
+  font-size: 13px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transition: opacity .2s;
+}
+.sidebar.collapsed .sb-uname { opacity: 0; }
+
+/* ── TOPBAR ── */
+.topbar {
+  position: fixed; top: 0; right: 0; height: 56px; z-index: 99;
+  left: var(--sb-wide);
+  background: var(--bg2); border-bottom: 1px solid var(--bdr);
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 22px; gap: 10px;
+  transition: left .25s cubic-bezier(.4,0,.2,1);
+}
+.sidebar.collapsed ~ .topbar { left: var(--sb-narrow); }
+
+.bal-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--bdr);
+  border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 15px;
+}
+.bal-chip img { width: 18px; height: 18px; }
+
+.btn-deposit {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(34,197,94,.1);
+  border: 1px solid rgba(34,197,94,.35);
+  border-radius: 8px; padding: 6px 14px;
+  color: var(--green); font-size: 13px; font-weight: 700;
+  transition: background .15s, border-color .15s, transform .12s;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+}
+.btn-deposit img { width: 16px; height: 16px; opacity: .9; flex-shrink: 0; }
+.btn-deposit:hover {
+  background: rgba(34,197,94,.18);
+  border-color: var(--green);
+  transform: translateY(-1px);
+}
+.btn-deposit:active { transform: translateY(0); }
+
+.btn-logout {
+  background: none; border: 1px solid var(--bdr); border-radius: 8px;
+  padding: 7px 10px; color: var(--muted); display: flex; align-items: center; transition: .14s;
+}
+.btn-logout img { width: 16px; height: 16px; opacity: .55; }
+.btn-logout:hover { border-color: var(--muted); }
+.btn-logout:hover img { opacity: 1; }
+
+/* ── CONTENT ── */
+.content {
+  margin-left: var(--sb-wide);
+  padding-top: 56px; min-height: 100vh;
+  transition: margin-left .25s cubic-bezier(.4,0,.2,1);
+}
+.sidebar.collapsed ~ .topbar ~ .content,
+body.sb-collapsed .content { margin-left: var(--sb-narrow); }
+
+/* easier: target via a class on body set by JS */
+body.sb-collapsed .content  { margin-left: var(--sb-narrow); }
+body.sb-collapsed .topbar   { left: var(--sb-narrow); }
+
+.page-inner { padding: 28px; }
+
+/* ── SECTION TITLE ── */
+.sec-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 18px; font-weight: 700; margin-bottom: 16px;
+}
+.sec-title .bar { width: 4px; height: 22px; background: var(--green); border-radius: 2px; }
+
+/* ── GAME PAGE HEADER ── */
+.game-hdr { margin-bottom: 20px; }
+.game-hdr h1 { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+.game-hdr p  { color: var(--muted); font-size: 14px; }
+.game-wrap   { max-width: 860px; }

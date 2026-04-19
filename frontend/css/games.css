@@ -1,0 +1,126 @@
+/* ── COINFLIP ── */
+.cf-sides { display:flex; gap:12px; margin-bottom:18px; }
+.cf-btn {
+  flex:1; height:80px; border-radius:10px;
+  border:2px solid var(--bdr); background:var(--bg3);
+  font-size:18px; font-weight:700; transition:.18s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.cf-btn:hover    { border-color:var(--muted); }
+.cf-btn.sel-heads { border-color:var(--yel);  background:rgba(245,158,11,.1); color:var(--yel); }
+.cf-btn.sel-tails { border-color:var(--blue); background:rgba(59,130,246,.1); color:var(--blue); }
+.coin-vis {
+  width:96px; height:96px; border-radius:50%; border:4px solid var(--bdr);
+  margin:0 auto 18px; display:flex; align-items:center; justify-content:center; font-size:44px;
+}
+.coin-vis.spin { animation:cspin .88s ease-in-out; }
+@keyframes cspin {
+  0%   { transform:rotateY(0); }
+  50%  { transform:rotateY(90deg) scale(.8); }
+  100% { transform:rotateY(0); }
+}
+
+/* ── DICE ── */
+.dice-target-row { display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+.dice-num  { font-size:48px; font-weight:800; color:var(--green); font-family:'DM Mono',monospace; }
+.ou-btns   { display:flex; gap:8px; }
+.ou-btn {
+  height:36px; padding:0 16px; border-radius:8px;
+  border:2px solid var(--bdr); background:var(--bg3);
+  font-size:13px; font-weight:700; color:var(--muted); transition:.14s;
+}
+.ou-btn.active { border-color:var(--green); color:var(--green); background:rgba(34,197,94,.1); }
+.dice-slider { width:100%; margin:12px 0; accent-color:var(--green); cursor:pointer; height:4px; }
+.dice-info   { display:flex; justify-content:space-between; font-size:13px; color:var(--muted); margin-bottom:18px; }
+.dice-info strong { color:var(--text); }
+.dice-vis    { display:flex; gap:10px; justify-content:center; margin:18px 0; }
+.die {
+  width:64px; height:64px; background:var(--bg3); border:2px solid var(--bdr);
+  border-radius:12px; display:flex; align-items:center; justify-content:center;
+  font-size:30px; transition:.28s;
+}
+.die.roll { animation:droll .5s ease-in-out; }
+@keyframes droll {
+  0%   { transform:rotate(0); }
+  25%  { transform:rotate(-10deg) scale(.9); }
+  75%  { transform:rotate(10deg) scale(.9); }
+  100% { transform:rotate(0); }
+}
+
+/* ── SLOTS ── */
+.slots-machine {
+  background:var(--bg); border:2px solid var(--bdr); border-radius:14px;
+  padding:24px; text-align:center; margin-bottom:16px;
+}
+.slots-reels { display:flex; justify-content:center; gap:12px; margin-bottom:20px; }
+.reel {
+  width:82px; height:82px; background:var(--bg2); border:2px solid var(--bdr);
+  border-radius:10px; display:flex; align-items:center; justify-content:center;
+  font-size:44px; overflow:hidden;
+}
+.reel.spinning { animation:rspin .09s linear infinite; }
+@keyframes rspin {
+  0%   { transform:translateY(-4px); }
+  50%  { transform:translateY(4px); }
+  100% { transform:translateY(-4px); }
+}
+.paytable { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.pay-row  { background:var(--bg3); border-radius:8px; padding:8px; text-align:center; }
+.pay-sym  { font-size:15px; }
+.pay-mult { font-size:12px; font-weight:700; color:var(--green); margin-top:2px; }
+
+/* ── MINES ── */
+.mines-set { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.mines-set label { font-size:13px; color:var(--muted); }
+.mines-set select {
+  background:var(--bg3); border:1px solid var(--bdr); border-radius:8px;
+  color:var(--text); padding:7px 10px; outline:none; font-size:13px;
+}
+.mines-stats { display:flex; gap:12px; margin-bottom:14px; }
+.m-stat { flex:1; background:var(--bg3); border:1px solid var(--bdr); border-radius:8px; padding:10px; text-align:center; }
+.m-stat .val { font-size:20px; font-weight:800; color:var(--green); }
+.m-stat .lbl { font-size:11px; color:var(--muted); }
+.mines-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:14px; }
+.m-cell {
+  aspect-ratio:1; background:var(--bg3); border:1px solid var(--bdr);
+  border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-size:22px; cursor:pointer; transition:.16s;
+}
+.m-cell:hover:not(.gem):not(.bomb) { background:var(--bg2); border-color:var(--green); }
+.m-cell.gem  { background:rgba(34,197,94,.13); border-color:var(--green); }
+.m-cell.bomb { background:rgba(239,68,68,.13); border-color:var(--red); animation:shake .28s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+.btn-cashout {
+  width:100%; height:50px; background:var(--yel); border:none; border-radius:10px;
+  color:#000; font-size:15px; font-weight:800; transition:.14s;
+}
+.btn-cashout:hover { background:#d97706; }
+
+/* ── CRASH ── */
+.crash-screen {
+  background:var(--bg); border:2px solid var(--bdr); border-radius:14px;
+  height:240px; position:relative; overflow:hidden;
+  display:flex; align-items:center; justify-content:center; margin-bottom:14px;
+}
+.crash-multi { font-family:'Bebas Neue',sans-serif; font-size:90px; letter-spacing:4px; z-index:2; transition:color .1s; }
+.crash-multi.waiting { color:var(--muted); font-size:42px; }
+.crash-multi.live    { color:var(--green); }
+.crash-multi.crashed { color:var(--red); }
+.crash-glow {
+  position:absolute; bottom:0; left:0; right:0; height:60px;
+  background:linear-gradient(0deg,rgba(34,197,94,.07),transparent); pointer-events:none;
+}
+.crash-status { position:absolute; bottom:12px; right:16px; font-size:11px; font-weight:700; letter-spacing:1px; color:var(--muted); }
+.crash-players {
+  background:var(--bg2); border:1px solid var(--bdr); border-radius:10px;
+  max-height:130px; overflow-y:auto; padding:6px; margin-bottom:12px;
+}
+.cp-row { display:flex; justify-content:space-between; padding:5px 8px; border-radius:6px; font-size:13px; }
+.cp-row.active { color:var(--muted); }
+.cp-row.cashed { background:rgba(34,197,94,.08); color:var(--green); }
+.cp-row.busted { background:rgba(239,68,68,.07); color:var(--red); }
+.btn-cashout-crash {
+  width:100%; height:50px; background:var(--yel); border:none; border-radius:10px;
+  color:#000; font-size:15px; font-weight:800; transition:.14s; margin-top:6px;
+}
+.btn-cashout-crash:hover { background:#d97706; }

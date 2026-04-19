@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=/frontend/pages/login.html">
+  <title>Redirecting...</title>
+  <script>
+    window.location.href = "/frontend/pages/login.html";
+  </script>
+</head>
+<body>
+  Redirecting to login...
+</body>
+</html>

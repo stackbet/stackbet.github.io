@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StackBet — Login</title>
+  <link rel="icon" href="../icons/favicon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/login.css"/>
+</head>
+<body>
+
+<div class="login-wrap">
+
+  <!-- Logo -->
+  <div class="logo-icon">
+    <img src="../icons/logo-white.png" alt="SB"/>
+  </div>
+
+  <div class="logo-text">STACK<span>BET</span></div>
+
+  <p class="tagline">A midnight casino floor — tense, electric, confident.</p>
+
+  <!-- How to log in -->
+  <div class="how-box">
+    <div class="how-title">HOW TO LOG IN</div>
+    <div class="how-step">
+      <div class="step-n">1</div>
+      <p>Join our Discord server to get started:<br>
+        <a href="https://discord.gg/utBqNCB2Z5" target="_blank">discord.gg/utBqNCB2Z5</a>
+      </p>
+    </div>
+    <div class="how-step">
+      <div class="step-n">2</div>
+      <p>Type <span class="cmd">.link</span> in any channel where the StackBet bot is active.</p>
+    </div>
+    <div class="how-step">
+      <div class="step-n">3</div>
+      <p>The bot replies with a 6-character code. Enter it below. Codes expire in 5 minutes.</p>
+    </div>
+  </div>
+
+  <!-- 6-char code boxes -->
+  <div class="code-row">
+    <input id="c0" maxlength="1" autocomplete="off" oninput="codeType(0)" onkeydown="codeBack(event,0)" onpaste="codePaste(event,0)"/>
+    <input id="c1" maxlength="1" autocomplete="off" oninput="codeType(1)" onkeydown="codeBack(event,1)" onpaste="codePaste(event,1)"/>
+    <input id="c2" maxlength="1" autocomplete="off" oninput="codeType(2)" onkeydown="codeBack(event,2)" onpaste="codePaste(event,2)"/>
+    <input id="c3" maxlength="1" autocomplete="off" oninput="codeType(3)" onkeydown="codeBack(event,3)" onpaste="codePaste(event,3)"/>
+    <input id="c4" maxlength="1" autocomplete="off" oninput="codeType(4)" onkeydown="codeBack(event,4)" onpaste="codePaste(event,4)"/>
+    <input id="c5" maxlength="1" autocomplete="off" oninput="codeType(5)" onkeydown="codeBack(event,5)" onpaste="codePaste(event,5)"/>
+  </div>
+
+  <p class="login-error" id="loginErr"></p>
+
+  <button class="btn-enter" onclick="doLogin()">Enter Casino</button>
+
+  <div class="discord-note">
+    <img src="../icons/discord.png" alt="Discord"/>
+    Your balance and stats are linked to your Discord account
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- Load config first so SUPABASE_URL and SUPABASE_KEY are defined -->
+<script src="../js/config.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/session.js"></script>
+<script src="../js/login.js"></script>
+</body>
+</html>

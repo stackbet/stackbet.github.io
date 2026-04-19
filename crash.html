@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StackBet — Crash</title>
+  <link rel="icon" href="../icons/favicon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/app.css"/>
+  <link rel="stylesheet" href="../css/games.css"/>
+  <link rel="stylesheet" href="../css/admin.css"/>
+</head>
+<body>
+<nav class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+    <span class="sb-logo-name">StackBet</span>
+  </div>
+  <div class="nav">
+    <a href="dashboard.html" class="nav-link" data-label="Dashboard"><img src="../icons/nav-lobby.png"    alt=""/><span>Dashboard</span></a>
+    <a href="slots.html"     class="nav-link" data-label="Slots"    ><img src="../icons/nav-slots.png"    alt=""/><span>Slots</span></a>
+    <a href="coinflip.html"  class="nav-link" data-label="Coinflip" ><img src="../icons/nav-coinflip.png" alt=""/><span>Coinflip</span></a>
+    <a href="dice.html"      class="nav-link" data-label="Dice"     ><img src="../icons/nav-dice.png"     alt=""/><span>Dice</span></a>
+    <a href="mines.html"     class="nav-link" data-label="Mines"    ><img src="../icons/nav-mines.png"    alt=""/><span>Mines</span></a>
+    <a href="crash.html"     class="nav-link active" data-label="Crash"    ><img src="../icons/nav-crash.png"    alt=""/><span>Crash</span></a>
+    <a href="deposit.html"   class="nav-link" data-label="Deposit"  ><img src="../icons/deposit.png"      alt=""/><span>Deposit</span></a>
+  </div>
+  <div class="sb-user"><div class="js-avatar"></div><span class="sb-uname js-username">—</span></div>
+</nav>
+<div class="topbar">
+  <div class="bal-chip"><img src="../icons/chip.png" alt="chips"/>$<span class="js-balance">0.00</span></div>
+  <button class="btn-logout" onclick="logout()"><img src="../icons/logout.png" alt="logout"/></button>
+</div>
+<div class="content"><div class="page-inner"><div class="game-wrap">
+  <div class="game-hdr"><h1>📈 Crash</h1><p>Bet and cash out before the rocket crashes!</p></div>
+  <div class="game-panel">
+    <div class="crash-screen">
+      <div class="crash-multi waiting" id="crashMulti">WAITING...</div>
+      <div class="crash-glow"></div>
+      <div class="crash-status" id="crashStatus">Place bets now!</div>
+    </div>
+    <div class="crash-players" id="crashPlayers"></div>
+    <label class="bet-label">BET AMOUNT</label>
+    <div class="bet-row">
+      <input class="bet-input" type="number" id="crashBet" value="10" min="1"/>
+      <div class="qbtns">
+        <button class="qbtn" onclick="half('crashBet')">½</button>
+        <button class="qbtn" onclick="dbl('crashBet')">2×</button>
+        <button class="qbtn" onclick="mx('crashBet')">Max</button>
+      </div>
+    </div>
+    <button class="btn-play" id="betBtn" onclick="placeBet()">Place Bet</button>
+    <button class="btn-cashout-crash hidden" id="cashBtn" onclick="doCashout()">
+      Cash Out (<span id="cashMultiLabel">1.00</span>×)
+    </button>
+  </div>
+</div></div></div>
+<div id="toast" class="toast"></div>
+<script src="../js/config.js"></script><script src="../js/db.js"></script>
+<script src="../js/session.js"></script><script src="../js/ui.js"></script>
+<script src="../js/sidebar.js"></script><script src="../js/crash.js"></script>
+<script src="../js/admin.js"></script>
+</body></html>

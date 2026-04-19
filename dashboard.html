@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StackBet — Dashboard</title>
+  <link rel="icon" href="../icons/favicon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/app.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../css/admin.css"/>
+</head>
+<body>
+<nav class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()" title="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <span class="sb-logo-name">StackBet</span>
+  </div>
+  <div class="nav">
+    <a href="dashboard.html" class="nav-link active" data-label="Dashboard"><img src="../icons/nav-lobby.png"    alt=""/><span>Dashboard</span></a>
+    <a href="slots.html"     class="nav-link" data-label="Slots"    ><img src="../icons/nav-slots.png"    alt=""/><span>Slots</span></a>
+    <a href="coinflip.html"  class="nav-link" data-label="Coinflip" ><img src="../icons/nav-coinflip.png" alt=""/><span>Coinflip</span></a>
+    <a href="dice.html"      class="nav-link" data-label="Dice"     ><img src="../icons/nav-dice.png"     alt=""/><span>Dice</span></a>
+    <a href="mines.html"     class="nav-link" data-label="Mines"    ><img src="../icons/nav-mines.png"    alt=""/><span>Mines</span></a>
+    <a href="crash.html"     class="nav-link" data-label="Crash"    ><img src="../icons/nav-crash.png"    alt=""/><span>Crash</span></a>
+    <a href="deposit.html"   class="nav-link" data-label="Deposit"  ><img src="../icons/deposit.png"      alt=""/><span>Deposit</span></a>
+  </div>
+  <div class="sb-user">
+    <div class="js-avatar"></div>
+    <span class="sb-uname js-username">—</span>
+  </div>
+</nav>
+<div class="topbar">
+  <div class="bal-chip"><img src="../icons/chip.png" alt="chips"/>$<span class="js-balance">0.00</span></div>
+  <a href="deposit.html" class="btn-deposit"><img src="../icons/deposit.png" alt="deposit"/>Deposit</a>
+  <button class="btn-logout" onclick="logout()" title="Log out"><img src="../icons/logout.png" alt="logout"/></button>
+</div>
+<div class="content">
+  <div class="page-inner">
+    <div class="welcome-banner">
+      <div class="wb-left"><h2>Welcome back, <span id="welcomeName">Player</span></h2></div>
+      <div class="wb-right"><span class="lbl">BALANCE&nbsp;</span><span class="amt">$<span id="welcomeBal">0.00</span></span></div>
+    </div>
+    <div class="sec-title"><div class="bar"></div>Featured Games</div>
+    <div class="games-grid">
+      <div class="game-card" onclick="location.href='slots.html'"><div class="gc-icon" style="background:rgba(236,72,153,.15)">&#x1F3B0;</div><h3>Slots</h3><p>Spin to win</p></div>
+      <div class="game-card" onclick="location.href='coinflip.html'"><div class="gc-icon" style="background:rgba(245,158,11,.15)">&#x1FA99;</div><h3>Coinflip</h3><p>Double or nothing</p></div>
+      <div class="game-card" onclick="location.href='dice.html'"><div class="gc-icon" style="background:rgba(168,85,247,.15)">&#x1F3B2;</div><h3>Dice</h3><p>Roll the odds</p></div>
+      <div class="game-card" onclick="location.href='mines.html'"><div class="gc-icon" style="background:rgba(239,68,68,.15)">&#x1F4A3;</div><h3>Mines</h3><p>Dodge the bombs</p></div>
+      <div class="game-card" onclick="location.href='crash.html'"><div class="gc-icon" style="background:rgba(34,197,94,.15)">&#x1F4C8;</div><h3>Crash</h3><p>Ride the multiplier</p></div>
+    </div>
+    </div>
+    <div class="bottom-grid">
+      <div class="panel">
+        <div class="sec-title" style="margin-bottom:12px">
+          <svg width="16" height="16" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Recent Wins
+        </div>
+        <div id="liveFeed"><p class="empty">No wins yet — be the first!</p></div>
+      </div>
+      <div class="panel">
+        <div class="sec-title" style="margin-bottom:12px">
+          <svg width="16" height="16" fill="none" stroke="var(--yel)" stroke-width="2" viewBox="0 0 24 24"><path d="M8 21h8M12 21v-4M12 3l2 4 4.5.7-3.3 3.2.8 4.5L12 13l-4 2.4.8-4.5L5.5 7.7 10 7z"/></svg>
+          Top Rollers
+        </div>
+        <div id="leaderboard"><p class="empty">Loading...</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<script src="../js/config.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/session.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/dashboard.js"></script>
+<script src="../js/admin.js"></script>
+</body>
+</html>

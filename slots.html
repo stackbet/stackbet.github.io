@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StackBet — Slots</title>
+  <link rel="icon" href="../icons/favicon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/app.css"/>
+  <link rel="stylesheet" href="../css/admin.css"/>
+  <style>
+.slots-wrap { max-width:520px; margin:0 auto; }
+.sl-machine {
+  background:var(--bg2); border:1px solid var(--bdr); border-radius:18px;
+  padding:clamp(14px,3vw,22px); position:relative; overflow:hidden;
+  display:flex; flex-direction:column; gap:clamp(10px,2vw,14px);
+}
+.sl-machine::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%,rgba(34,197,94,.07) 0%,transparent 65%);
+}
+.sl-flash { position:absolute; inset:0; border-radius:17px; pointer-events:none; z-index:20; opacity:0; border:2px solid var(--green); }
+.sl-flash.show { animation:slFl .9s ease-out forwards; }
+@keyframes slFl { 0%{opacity:.9} 100%{opacity:0} }
+.sl-coins { position:absolute; inset:0; pointer-events:none; z-index:50; overflow:hidden; border-radius:16px; }
+.sl-cp { position:absolute; animation:slCp 1.5s ease-out forwards; font-family:'Segoe UI Emoji','Apple Color Emoji',sans-serif; filter:drop-shadow(0 0 6px var(--green)); }
+@keyframes slCp { 0%{transform:translate(0,0) rotate(0) scale(1.3);opacity:1} 100%{transform:translate(var(--tx),var(--ty)) rotate(var(--tr)) scale(.2);opacity:0} }
+.sl-dp { position:absolute; border-radius:50%; animation:slDp 1.2s ease-out forwards; }
+@keyframes slDp { 0%{transform:translate(0,0) scale(1);opacity:1} 100%{transform:translate(var(--tx),var(--ty)) scale(.1);opacity:0} }
+
+:root { --slsh:64px; }
+.sl-reel-window {
+  background:#0b0f1a; border:1px solid var(--bdr); border-radius:12px;
+  height:calc(var(--slsh)*3 + 12px); padding:6px;
+  display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;
+  position:relative; overflow:hidden;
+}
+.sl-reel-window::before,.sl-reel-window::after {
+  content:''; position:absolute; left:0; right:0; height:calc(var(--slsh)*.8); z-index:10; pointer-events:none;
+}
+.sl-reel-window::before { top:0;    background:linear-gradient(to bottom,#0b0f1aee,transparent); }
+.sl-reel-window::after  { bottom:0; background:linear-gradient(to top,  #0b0f1aee,transparent); }
+.sl-win-line {
+  position:absolute; top:calc(6px + var(--slsh)*1.5); left:6px; right:6px;
+  transform:translateY(-50%); height:2px;
+  background:linear-gradient(90deg,transparent,rgba(34,197,94,.5),transparent);
+  z-index:11; pointer-events:none;
+}
+.sl-reel  { position:relative; overflow:hidden; border-radius:6px; height:calc(var(--slsh)*3); background:#0b0f1a; }
+.sl-strip { position:absolute; left:0; right:0; top:0; will-change:top; }
+.sl-sym   { width:100%; height:var(--slsh); display:flex; align-items:center; justify-content:center; font-size:clamp(28px,5.5vw,38px); user-select:none; font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif; line-height:1; }
+
+.sl-pays { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
+.sl-pay-item { background:var(--bg3); border:1px solid var(--bdr); border-radius:6px; padding:3px 8px; font-size:clamp(9px,1.5vw,11px); color:var(--muted); display:flex; align-items:center; gap:3px; font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif; }
+.sl-mult { color:var(--green); font-weight:700; }
+
+.sl-stats { display:flex; gap:8px; }
+.sl-stat  { flex:1; background:var(--bg3); border:1px solid var(--bdr); border-radius:10px; padding:8px; text-align:center; min-width:0; }
+.sl-stat-lbl { font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; white-space:nowrap; }
+.sl-stat-val { font-size:clamp(13px,2.8vw,18px); font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sl-stat-val.flash { animation:sfv .5s; }
+@keyframes sfv { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18);color:var(--green)} }
+
+.sl-bet-row { display:flex; align-items:center; justify-content:center; gap:10px; }
+.sl-box-btn { background:var(--bg3); border:1px solid var(--bdr); border-radius:10px; color:var(--text); font-size:clamp(18px,3vw,22px); font-weight:800; width:clamp(38px,7vw,46px); height:clamp(38px,7vw,46px); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.12s; flex-shrink:0; }
+.sl-box-btn:hover  { background:var(--bg); border-color:var(--green); }
+.sl-box-btn:active { transform:scale(.91); }
+.sl-bet-display { background:var(--bg3); border:1px solid var(--bdr); border-radius:10px; padding:7px clamp(12px,3vw,22px); text-align:center; min-width:120px; cursor:pointer; transition:border-color .15s; position:relative; }
+.sl-bet-display:hover   { border-color:var(--muted); }
+.sl-bet-display.editing { border-color:var(--green); }
+.sl-blabel { font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+.sl-bamt   { font-size:clamp(16px,3.5vw,22px); font-weight:700; color:var(--text); }
+.sl-bhint  { font-size:9px; color:var(--bdr); letter-spacing:1px; margin-top:1px; }
+.sl-bet-input-wrap { display:none; position:absolute; inset:0; border-radius:9px; background:var(--bg3); padding:4px 8px; align-items:center; justify-content:center; }
+.sl-bet-input-wrap.active { display:flex; }
+.sl-bet-input-wrap input { background:transparent; border:none; outline:none; color:var(--green); font-size:clamp(16px,3.5vw,20px); font-weight:700; width:100%; text-align:center; font-family:'DM Mono',monospace; }
+
+.sl-controls { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.sl-ctrl { background:var(--bg3); border:1px solid var(--bdr); border-radius:10px; color:var(--muted); font-size:clamp(11px,2vw,13px); font-weight:700; padding:0 clamp(12px,2.5vw,18px); height:clamp(40px,6vw,46px); cursor:pointer; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; justify-content:center; transition:.12s; min-width:clamp(70px,14vw,88px); }
+.sl-ctrl:hover  { background:var(--bg); border-color:var(--muted); color:var(--text); }
+.sl-ctrl:active { transform:scale(.95); }
+.sl-ctrl.spin   { border-color:var(--green); color:var(--green); font-size:clamp(13px,2.5vw,16px); font-weight:800; letter-spacing:3px; min-width:clamp(100px,20vw,128px); }
+.sl-ctrl.spin:hover:not(:disabled) { background:rgba(34,197,94,.1); box-shadow:0 0 20px var(--gglow); }
+.sl-ctrl.spin:disabled { border-color:var(--bdr); color:var(--bdr); cursor:not-allowed; background:none; }
+.sl-ctrl.auto-on { border-color:var(--green); color:var(--green); background:rgba(34,197,94,.08); }
+
+.sl-msg { height:30px; display:flex; align-items:center; justify-content:center; font-size:clamp(12px,2.5vw,14px); font-weight:700; letter-spacing:1px; color:var(--muted); }
+.sl-msg.win  { color:var(--green); font-size:clamp(14px,2.8vw,17px); }
+.sl-msg.near { color:var(--yel); }
+.sl-msg.spin { color:var(--muted); font-size:clamp(10px,2vw,12px); letter-spacing:3px; animation:slbl .7s infinite; }
+@keyframes slbl { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.sl-history { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+.sl-pip { width:8px; height:8px; border-radius:50%; background:var(--bg3); border:1px solid var(--bdr); }
+.sl-pip.won  { background:var(--green); border-color:var(--green); box-shadow:0 0 4px var(--green); }
+.sl-pip.lost { background:var(--bg); }
+
+.sl-win-banner { display:none; background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.3); border-radius:10px; padding:12px 16px; text-align:center; }
+.sl-win-banner.show { display:block; }
+.sl-wbe { font-size:28px; margin-bottom:4px; }
+.sl-wbt { font-size:16px; font-weight:800; color:var(--green); margin-bottom:2px; }
+.sl-wbs { font-size:12px; color:var(--muted); }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+    <span class="sb-logo-name">StackBet</span>
+  </div>
+  <div class="nav">
+    <a href="dashboard.html" class="nav-link"        data-label="Dashboard"><img src="../icons/nav-lobby.png"    alt=""/><span>Dashboard</span></a>
+    <a href="slots.html"     class="nav-link active" data-label="Slots"    ><img src="../icons/nav-slots.png"    alt=""/><span>Slots</span></a>
+    <a href="coinflip.html"  class="nav-link"        data-label="Coinflip" ><img src="../icons/nav-coinflip.png" alt=""/><span>Coinflip</span></a>
+    <a href="dice.html"      class="nav-link"        data-label="Dice"     ><img src="../icons/nav-dice.png"     alt=""/><span>Dice</span></a>
+    <a href="mines.html"     class="nav-link"        data-label="Mines"    ><img src="../icons/nav-mines.png"    alt=""/><span>Mines</span></a>
+    <a href="crash.html"     class="nav-link"        data-label="Crash"    ><img src="../icons/nav-crash.png"    alt=""/><span>Crash</span></a>
+    <a href="deposit.html"   class="nav-link"        data-label="Deposit"  ><img src="../icons/deposit.png"      alt=""/><span>Deposit</span></a>
+  </div>
+  <div class="sb-user"><div class="js-avatar"></div><span class="sb-uname js-username">—</span></div>
+</nav>
+
+<div class="topbar">
+  <div class="bal-chip"><img src="../icons/chip.png" alt="chips"/>$<span class="js-balance">0.00</span></div>
+  <a href="deposit.html" class="btn-deposit"><img src="../icons/deposit.png" alt="deposit"/>Deposit</a>
+  <button class="btn-logout" onclick="logout()"><img src="../icons/logout.png" alt="logout"/></button>
+</div>
+
+<div class="content">
+  <div class="page-inner">
+    <div class="slots-wrap">
+      <div class="sl-machine" id="slMachine">
+        <div class="sl-flash" id="slFlash"></div>
+        <div class="sl-coins" id="slCoins"></div>
+
+        <div class="sl-stats">
+          <div class="sl-stat"><div class="sl-stat-lbl">Balance</div>  <div class="sl-stat-val" id="slBal">—</div></div>
+          <div class="sl-stat"><div class="sl-stat-lbl">Last Win</div> <div class="sl-stat-val" id="slLastWin">—</div></div>
+          <div class="sl-stat"><div class="sl-stat-lbl">Total Won</div><div class="sl-stat-val" id="slTotalWon">—</div></div>
+        </div>
+
+        <div class="sl-reel-window">
+          <div class="sl-win-line"></div>
+          <div class="sl-reel"><div class="sl-strip" id="sl0"></div></div>
+          <div class="sl-reel"><div class="sl-strip" id="sl1"></div></div>
+          <div class="sl-reel"><div class="sl-strip" id="sl2"></div></div>
+        </div>
+
+        <div class="sl-pays">
+          <div class="sl-pay-item">Any&#xD7;2 <span class="sl-mult">0.5&#xD7;</span></div>
+          <div class="sl-pay-item">&#x1F352;&#xD7;3 <span class="sl-mult">6&#xD7;</span></div>
+          <div class="sl-pay-item">&#x1F34B;&#xD7;3 <span class="sl-mult">11&#xD7;</span></div>
+          <div class="sl-pay-item">&#x1F34A;&#xD7;3 <span class="sl-mult">16&#xD7;</span></div>
+          <div class="sl-pay-item">&#x1F514;&#xD7;3 <span class="sl-mult">24&#xD7;</span></div>
+          <div class="sl-pay-item">&#x1F48E;&#xD7;3 <span class="sl-mult">39&#xD7;</span></div>
+          <div class="sl-pay-item">&#x2B50;&#xD7;3 <span class="sl-mult">79&#xD7;</span></div>
+          <div class="sl-pay-item">7&#xFE0F;&#x20E3;&#xD7;3 <span class="sl-mult">157&#xD7;</span></div>
+        </div>
+
+        <div class="sl-bet-row">
+          <button class="sl-box-btn" id="slBdown">&#8722;</button>
+          <div class="sl-bet-display" id="slBetDisplay" onclick="slOpenBet()" title="Click to type custom amount">
+            <div class="sl-blabel">Bet Per Spin</div>
+            <div class="sl-bamt" id="slBetAmt">10</div>
+            <div class="sl-bhint">click to edit &#xB7; K M B T ok</div>
+            <div class="sl-bet-input-wrap" id="slBetWrap">
+              <input type="text" id="slBetInp" placeholder="500, 1K, 2.5M&#x2026;"
+                     onblur="slCommit()" onkeydown="slBetKey(event)"/>
+            </div>
+          </div>
+          <button class="sl-box-btn" id="slBup">&#43;</button>
+        </div>
+
+        <div class="sl-controls">
+          <button class="sl-ctrl" id="slMaxBtn">Max Bet</button>
+          <button class="sl-ctrl spin" id="slSpinBtn" onclick="slSpin()">SPIN</button>
+          <button class="sl-ctrl" id="slAutoBtn">Auto</button>
+        </div>
+
+        <div class="sl-msg" id="slMsg">Good luck!</div>
+
+        <div class="sl-win-banner" id="slBanner">
+          <div class="sl-wbe" id="slBannerE"></div>
+          <div class="sl-wbt" id="slBannerT"></div>
+          <div class="sl-wbs" id="slBannerS"></div>
+        </div>
+
+        <div class="sl-history"><span>History:</span><div id="slPips" style="display:flex;gap:4px;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="../js/config.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/session.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+// ── Chip abbreviation formatter ───────────────────────────────
+function fmtC(n) {
+  n = parseFloat(n);
+  if (isNaN(n)) return "0";
+  const a = Math.abs(n);
+  if (a >= 1e12) return (n/1e12).toFixed(2).replace(/\.?0+$/,"")+"T";
+  if (a >= 1e9)  return (n/1e9) .toFixed(2).replace(/\.?0+$/,"")+"B";
+  if (a >= 1e6)  return (n/1e6) .toFixed(2).replace(/\.?0+$/,"")+"M";
+  if (a >= 1e3)  return (n/1e3) .toFixed(2).replace(/\.?0+$/,"")+"K";
+  return n % 1 === 0 ? String(Math.floor(n)) : n.toFixed(2);
+}
+function parseC(s) {
+  s = (s||"").trim().toLowerCase();
+  const sfx={k:1e3,m:1e6,b:1e9,t:1e12};
+  const last=s.slice(-1);
+  try { const v=sfx[last]?parseFloat(s.slice(0,-1))*sfx[last]:parseFloat(s); return isFinite(v)&&v>0?v:null; } catch{return null;}
+}
+
+// ── Game data — 95.66% RTP ────────────────────────────────────
+// P(3oak)=0.04, P(pair)=0.24, P(miss)=0.72
+// E[return] = 0.04*20.916 + 0.24*0.5 = 0.9566
+const SYMS=[
+  {id:"cherry",e:"\u{1F352}",w:30,pay:6},
+  {id:"lemon", e:"\u{1F34B}",w:22,pay:11},
+  {id:"orange",e:"\u{1F34A}",w:16,pay:16},
+  {id:"bell",  e:"\u{1F514}",w:12,pay:24},
+  {id:"gem",   e:"\u{1F48E}",w:8, pay:39},
+  {id:"star",  e:"\u2B50",   w:5, pay:79},
+  {id:"seven", e:"7\uFE0F\u20E3",w:2,pay:157},
+];
+const SYM_W=SYMS.map(s=>s.w);
+const SYM_P=Object.fromEntries(SYMS.map(s=>[s.id,s.pay]));
+const BETS=[1,5,10,25,50,100,250,500,1e3,5e3,1e4,1e5,1e6,1e7,1e8,5e8,1e9];
+const SH=64, SL=15;
+const COINS=["\u{1F4B0}","\u{1FA99}","\u{1F4B0}","\u2728","\u2B50","\u{1F4AB}"];
+const LMSG=["Try again!","Almost there!","Keep spinning!","One more spin?","So close\u2026","Next one could be huge!"];
+
+let slBal=0,slBet=10,slIdx=2,slWon=0,slLmi=0,slHist=[];
+let slSpin_=false,slAuto=false,slAutoT=null;
+
+document.addEventListener("DOMContentLoaded",async()=>{
+  const u=await fillShell(); if(!u)return;
+  slBal=parseFloat(u.balance)||0; slUI();
+});
+
+function wpick(){
+  const tot=SYM_W.reduce((a,b)=>a+b,0); let r=Math.random()*tot;
+  for(let i=0;i<SYMS.length;i++){r-=SYM_W[i];if(r<=0)return i;}
+  return SYMS.length-1;
+}
+
+function buildStrip(ri,cid){
+  const s=document.getElementById("sl"+ri); s.innerHTML="";
+  for(let i=0;i<SL;i++){
+    const d=document.createElement("div"); d.className="sl-sym";
+    const sym=(i===1&&cid!=null)?(SYMS.find(x=>x.id===cid)||SYMS[wpick()]):SYMS[wpick()];
+    d.dataset.sid=sym.id; d.textContent=sym.e; s.appendChild(d);
+  }
+  s.style.top="0px";
+}
+function buildAll(){for(let i=0;i<3;i++)buildStrip(i,null);}
+function centre(s){return s.children[1]?.dataset?.sid||SYMS[0].id;}
+
+function slSpin(){
+  if(slSpin_)return;
+  if(slBal<slBet){setMsg("Not enough chips!","");return;}
+  slSpin_=true; slBal-=slBet; slUI();
+  const btn=document.getElementById("slSpinBtn");
+  btn.disabled=true; btn.textContent="...";
+  setMsg("SPINNING","spin");
+  document.getElementById("slBanner").classList.remove("show");
+
+  const r=Math.random();
+  let tgt;
+  if(r<0.04){const s=wpick();tgt=[s,s,s];}
+  else if(r<0.28){const s=wpick();tgt=[s,s,wpick()];while(tgt[2]===tgt[0])tgt[2]=wpick();}
+  else{tgt=[wpick(),wpick(),wpick()];while(tgt[0]===tgt[1]||tgt[1]===tgt[2]||tgt[0]===tgt[2])tgt=[wpick(),wpick(),wpick()];}
+
+  for(let i=0;i<3;i++)buildStrip(i,SYMS[tgt[i]].id);
+  let done=0;
+  for(let i=0;i<3;i++)animReel(i,150*i,1200+150*i,()=>{done++;if(done===3)onDone();});
+}
+
+function onDone(){
+  const btn=document.getElementById("slSpinBtn");
+  btn.disabled=false; btn.textContent="SPIN";
+  const res=[0,1,2].map(i=>centre(document.getElementById("sl"+i)));
+  const is3=res[0]===res[1]&&res[1]===res[2];
+  const isPair=!is3&&(res[0]===res[1]||res[1]===res[2]);
+  const ps=isPair?(res[0]===res[1]?res[0]:res[1]):null;
+  let pay=0, mult=0;
+
+  if(is3){
+    mult=SYM_P[res[0]]||6; pay=slBet*mult;
+    const sym=SYMS.find(s=>s.id===res[0]);
+    const e=sym?sym.e:"?";
+    slWon+=pay; slHist.push("won");
+    setMsg(e+" "+e+" "+e+"  +"+fmtC(pay)+" WIN!","win");
+    burst(mult); flashMachine();
+    showBanner(e+e+e,"+"+fmtC(pay)+" chips!",mult+"x on "+(sym?.id||"symbol"));
+    flashStat("slLastWin",fmtC(pay));
+  } else if(isPair){
+    mult=0.5; pay=slBet*0.5;
+    const sym=SYMS.find(s=>s.id===ps);
+    const e=sym?sym.e:"?";
+    slWon+=pay; slHist.push("won");
+    setMsg(e+" "+e+"  Pair! +"+fmtC(pay),"near");
+    burst(2); showBanner(e+e,"+"+fmtC(pay)+" chips","0.5x pair");
+    flashStat("slLastWin",fmtC(pay));
+  } else {
+    slHist.push("lost"); setMsg(LMSG[slLmi++%LMSG.length],"");
+    document.getElementById("slLastWin").textContent="—";
+  }
+
+  slBal+=pay; slUI();
+  document.getElementById("slPips").innerHTML=slHist.slice(-10).map(h=>'<div class="sl-pip '+h+'"></div>').join("");
+
+  const u=sessionGet();
+  if(u){
+    dbSaveBet(u.discord_id,u.username,"Slots",slBet,mult,pay,pay>0)
+      .then(nb=>{sessionSetBalance(nb);slBal=nb;slUI();refreshBalance();})
+      .catch(()=>{sessionSetBalance(slBal);refreshBalance();});
+  }
+
+  slSpin_=false;
+  if(slBal<=0){setMsg("Out of chips!","");stopAuto();return;}
+  if(slAuto&&slBal>=slBet)slAutoT=setTimeout(slSpin,700);
+}
+
+function animReel(ri,startDelay,dur,cb){
+  const s=document.getElementById("sl"+ri);
+  const sH=SL*SH;
+  s.querySelectorAll(".sl-cl").forEach(c=>c.remove());
+  Array.from(s.children).forEach(c=>{const cl=c.cloneNode(true);cl.classList.add("sl-cl");s.appendChild(cl);});
+  s.style.top="0px";
+  const PEAK=1.6,ACC=100,DF=0.28;
+  const dS=dur*(1-DF),aD=PEAK*ACC*.5,cD=PEAK*(dS-ACC),d1=aD+cD;
+  const d2r=PEAK*dur*DF*.5,tot=Math.ceil((d1+d2r)/sH)*sH,d2=tot-d1;
+  let t0=null,done=false;
+  function frame(now){
+    if(done)return;
+    const el=now-t0,t=Math.min(el/dur,1);
+    let off;
+    if(el<=ACC)off=aD*Math.pow(el/ACC,2);
+    else if(t<(1-DF))off=aD+PEAK*(el-ACC);
+    else{
+      const t2=(t-(1-DF))/DF,e2=1-Math.pow(1-t2,3);
+      let b=0; if(t2>.87){const bt=(t2-.87)/.13;b=Math.sin(bt*Math.PI)*SH*.07*(1-bt);}
+      off=d1+e2*d2+b;
+    }
+    s.style.top=-(off%sH)+"px";
+    if(t>=1){s.style.top="0px";done=true;if(cb)cb();return;}
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(function k(now){
+    if(t0===null)t0=now+startDelay;
+    if(now<t0){requestAnimationFrame(k);return;}
+    frame(now);
+  });
+}
+
+function slUI(){
+  document.getElementById("slBal").textContent=fmtC(slBal);
+  document.getElementById("slTotalWon").textContent=fmtC(slWon);
+  document.getElementById("slBetAmt").textContent=fmtC(slBet);
+  document.querySelectorAll(".js-balance").forEach(el=>el.textContent=fmtC(parseFloat(sessionGet()?.balance||0)));
+}
+function setMsg(t,c){const e=document.getElementById("slMsg");e.textContent=t;e.className="sl-msg"+(c?" "+c:"");}
+function showBanner(e,t,s){
+  document.getElementById("slBannerE").textContent=e;
+  document.getElementById("slBannerT").textContent=t;
+  document.getElementById("slBannerS").textContent=s;
+  document.getElementById("slBanner").classList.add("show");
+}
+function flashStat(id,v){
+  const el=document.getElementById(id);
+  el.textContent=v; el.classList.add("flash");
+  setTimeout(()=>el.classList.remove("flash"),600);
+}
+function flashMachine(){const f=document.getElementById("slFlash");f.className="sl-flash show";setTimeout(()=>f.className="sl-flash",950);}
+
+function burst(m){
+  const L=document.getElementById("slCoins");
+  const cx=L.offsetWidth/2,cy=L.offsetHeight*.42;
+  const n=Math.min(8+m*2,40);
+  for(let i=0;i<n;i++)setTimeout(()=>{
+    const a=Math.random()*Math.PI*2,d=60+Math.random()*180;
+    const tx=(Math.cos(a)*d).toFixed(1)+"px",ty=(Math.sin(a)*d-70-Math.random()*50).toFixed(1)+"px",tr=(Math.random()*720-360).toFixed(0)+"deg";
+    const c=document.createElement("div");c.className="sl-cp";
+    c.style.cssText="left:"+(cx-12)+"px;top:"+cy+"px;font-size:"+(20+Math.random()*16)+"px;--tx:"+tx+";--ty:"+ty+";--tr:"+tr+";animation-delay:"+(Math.random()*.22)+"s";
+    c.textContent=COINS[Math.floor(Math.random()*COINS.length)];
+    L.appendChild(c);setTimeout(()=>c.remove(),1600);
+    const p=document.createElement("div");p.className="sl-dp";
+    const col=["var(--green)","#f59e0b","#3b82f6","#a855f7","#fff"][Math.floor(Math.random()*5)];
+    const sz=5+Math.random()*14;
+    p.style.cssText="left:"+cx+"px;top:"+cy+"px;width:"+sz+"px;height:"+sz+"px;background:"+col+";box-shadow:0 0 "+sz+"px "+col+";--tx:"+tx+";--ty:"+ty+";--tr:"+tr+";animation-delay:"+(Math.random()*.12)+"s";
+    L.appendChild(p);setTimeout(()=>p.remove(),1300);
+  },i*50);
+}
+
+function slOpenBet(){
+  if(slSpin_)return;
+  const w=document.getElementById("slBetWrap"),i=document.getElementById("slBetInp");
+  document.getElementById("slBetDisplay").classList.add("editing");
+  w.classList.add("active"); i.value=fmtC(slBet); i.focus(); i.select();
+}
+function slCommit(){
+  const i=document.getElementById("slBetInp"),w=document.getElementById("slBetWrap");
+  const p=parseC(i.value); if(p!==null){slBet=p;slIdx=BETS.reduce((b,v,k)=>Math.abs(v-slBet)<Math.abs(BETS[b]-slBet)?k:b,0);}
+  else if(i.value.trim())setMsg("Invalid — try 500, 1K, 2.5M","");
+  w.classList.remove("active"); document.getElementById("slBetDisplay").classList.remove("editing"); slUI();
+}
+function slBetKey(e){if(e.key==="Enter"||e.key==="Escape"){e.preventDefault();slCommit();}}
+
+document.getElementById("slBdown").addEventListener("click",()=>{if(slIdx>0){slIdx--;slBet=BETS[slIdx];slUI();}});
+document.getElementById("slBup").addEventListener("click",()=>{if(slIdx<BETS.length-1){slIdx++;slBet=BETS[slIdx];slUI();}});
+document.getElementById("slMaxBtn").addEventListener("click",()=>{if(slBal>0){slBet=slBal;slIdx=BETS.reduce((b,v,k)=>Math.abs(v-slBet)<Math.abs(BETS[b]-slBet)?k:b,0);}slUI();});
+document.getElementById("slAutoBtn").addEventListener("click",()=>{slAuto=!slAuto;document.getElementById("slAutoBtn").classList.toggle("auto-on",slAuto);if(slAuto&&!slSpin_)slSpin();else if(!slAuto)stopAuto();});
+function stopAuto(){slAuto=false;clearTimeout(slAutoT);document.getElementById("slAutoBtn").classList.remove("auto-on");}
+document.addEventListener("click",e=>{const w=document.getElementById("slBetWrap"),d=document.getElementById("slBetDisplay");if(w.classList.contains("active")&&!d.contains(e.target))slCommit();});
+
+buildAll(); slUI();
+</script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+/* ═══════════════════════════════════════════════════════════
+   deposit.css  —  Deposit page styles
+═══════════════════════════════════════════════════════════ */
+
+/* ── PAGE HEADER ── */
+.dep-hdr {
+  margin-bottom: 32px;
+}
+.dep-hdr h1 {
+  font-size: 26px; font-weight: 800; margin-bottom: 6px;
+}
+.dep-hdr p {
+  color: var(--muted); font-size: 14px; max-width: 480px; line-height: 1.6;
+}
+
+/* ── DEPOSIT BUTTON IN TOPBAR ── */
+/* Styles live in app.css so they apply on every page */
+
+
+/* ── METHODS GRID ── */
+.dep-grid {
+  display: flex; flex-direction: column; gap: 16px;
+  max-width: 760px;
+}
+
+/* ── SINGLE DEPOSIT CARD ── */
+.dep-card {
+  background: var(--bg2);
+  border: 1px solid var(--bdr);
+  border-radius: 16px;
+  padding: 28px 32px;
+  display: flex; align-items: center; gap: 28px;
+  transition: border-color .18s, box-shadow .18s;
+  position: relative; overflow: hidden;
+}
+.dep-card::before {
+  content: "";
+  position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+  background: var(--green);
+  border-radius: 3px 0 0 3px;
+  opacity: 0; transition: opacity .18s;
+}
+.dep-card:hover {
+  border-color: rgba(34,197,94,.4);
+  box-shadow: 0 8px 32px rgba(0,0,0,.3);
+}
+.dep-card:hover::before { opacity: 1; }
+
+/* ── CARD LEFT (icon + text) ── */
+.dep-card-left {
+  flex: 1; min-width: 0;
+}
+.dep-card-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 14px; flex-shrink: 0;
+}
+.dep-card-title {
+  font-size: 20px; font-weight: 800; margin-bottom: 6px;
+  line-height: 1.2;
+}
+.dep-card-desc {
+  font-size: 13px; color: var(--muted); line-height: 1.6;
+  max-width: 420px;
+}
+
+/* ── CARD RIGHT (button + stock) ── */
+.dep-card-right {
+  display: flex; flex-direction: column; align-items: flex-end;
+  gap: 10px; flex-shrink: 0;
+}
+.dep-btn {
+  height: 44px; padding: 0 28px;
+  background: var(--green); border: none; border-radius: 10px;
+  color: #000; font-size: 14px; font-weight: 800;
+  cursor: pointer; transition: background .14s, transform .12s, box-shadow .14s;
+  white-space: nowrap;
+}
+.dep-btn:hover {
+  background: var(--green2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px var(--gglow);
+}
+.dep-btn:active { transform: translateY(0); box-shadow: none; }
+
+.dep-stock {
+  font-size: 12px; font-weight: 800; letter-spacing: 1.5px;
+  color: var(--green);
+  display: flex; align-items: center; gap: 6px;
+}
+.dep-stock::before {
+  content: "";
+  display: inline-block; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: stockPulse 2s ease-in-out infinite;
+}
+@keyframes stockPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .4; }
+}
+
+/* ── RATE BADGE ── */
+.dep-rate {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.15);
+  border-radius: 6px; padding: 4px 10px; margin-top: 10px;
+  font-size: 12px; font-weight: 700; color: var(--green);
+}
+.dep-rate span { color: var(--text); font-weight: 500; }
+
+/* ── DIVIDER ── */
+.dep-divider {
+  height: 1px; background: var(--bdr); margin: 8px 0;
+  max-width: 760px;
+}
+
+/* ── INFO BOX ── */
+.dep-info {
+  max-width: 760px; margin-top: 32px;
+  background: var(--bg2); border: 1px solid var(--bdr);
+  border-radius: 12px; padding: 18px 22px;
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.dep-info-icon {
+  font-size: 18px; flex-shrink: 0; margin-top: 1px;
+}
+.dep-info-text {
+  font-size: 13px; color: var(--muted); line-height: 1.65;
+}
+.dep-info-text strong { color: var(--text); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .dep-card {
+    flex-direction: column; align-items: flex-start; padding: 22px 20px;
+  }
+  .dep-card-right {
+    align-items: flex-start; width: 100%;
+  }
+  .dep-btn { width: 100%; }
+}

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StackBet — Mines</title>
+  <link rel="icon" href="../icons/favicon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/app.css"/>
+  <link rel="stylesheet" href="../css/admin.css"/>
+  <style>
+/* ── MINES FULL-SCREEN LAYOUT ── */
+.mines-page {
+  display: flex;
+  height: calc(100vh - 56px); /* subtract topbar */
+  overflow: hidden;
+}
+
+/* ── LEFT CONTROL PANEL ── */
+.mines-panel {
+  width: 300px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--bdr);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 16px;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+/* Tab switcher (Manual / Auto) */
+.mines-tabs {
+  display: flex;
+  background: var(--bg3);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
+.mines-tab {
+  flex: 1; height: 36px; border: none; border-radius: 7px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  background: none; color: var(--muted); transition: .14s;
+}
+.mines-tab.active {
+  background: var(--bg2); color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+
+/* Bet amount row */
+.mp-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 5px;
+}
+.mp-bet-row {
+  display: flex; gap: 0;
+  background: var(--bg3); border: 1px solid var(--bdr); border-radius: 8px;
+  overflow: hidden;
+}
+.mp-bet-input {
+  flex: 1; height: 44px; background: none; border: none;
+  color: var(--text); font-size: 15px; font-weight: 600;
+  padding: 0 12px; outline: none;
+}
+.mp-bet-actions {
+  display: flex; border-left: 1px solid var(--bdr);
+}
+.mp-bet-btn {
+  height: 44px; padding: 0 12px;
+  background: none; border: none; border-left: 1px solid var(--bdr);
+  color: var(--muted); font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: .12s;
+}
+.mp-bet-btn:first-child { border-left: none; }
+.mp-bet-btn:hover { background: var(--bg2); color: var(--text); }
+
+/* Mines count select */
+.mp-select {
+  width: 100%; height: 44px;
+  background: var(--bg3); border: 1px solid var(--bdr); border-radius: 8px;
+  color: var(--text); font-size: 14px; font-weight: 600;
+  padding: 0 12px; outline: none; cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%2364748b' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+/* Stats row */
+.mp-stats {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.mp-stat {
+  background: var(--bg3); border: 1px solid var(--bdr); border-radius: 8px;
+  padding: 10px 12px;
+}
+.mp-stat-lbl { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+.mp-stat-val { font-size: 18px; font-weight: 800; color: var(--green); font-family: 'DM Mono', monospace; }
+.mp-stat-val.profit { color: var(--yel); }
+
+/* Total profit full-width */
+.mp-profit-row {
+  background: var(--bg3); border: 1px solid var(--bdr); border-radius: 8px;
+  padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+}
+.mp-profit-lbl { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--muted); }
+.mp-profit-val { font-size: 20px; font-weight: 800; color: var(--yel); font-family: 'DM Mono', monospace; }
+
+/* Bet button */
+.mp-btn {
+  width: 100%; height: 52px;
+  background: var(--green); border: none; border-radius: 10px;
+  color: #000; font-size: 16px; font-weight: 800; letter-spacing: .5px;
+  cursor: pointer; transition: background .14s, transform .1s, box-shadow .14s;
+  margin-top: auto;
+}
+.mp-btn:hover:not(:disabled) {
+  background: var(--green2);
+  box-shadow: 0 0 24px var(--gglow);
+  transform: translateY(-1px);
+}
+.mp-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Cashout button */
+.mp-btn-cashout {
+  width: 100%; height: 52px;
+  background: var(--yel); border: none; border-radius: 10px;
+  color: #000; font-size: 16px; font-weight: 800;
+  cursor: pointer; transition: background .14s, transform .1s;
+  margin-top: auto;
+}
+.mp-btn-cashout:hover:not(:disabled) { background: #d97706; transform: translateY(-1px); }
+.mp-btn-cashout:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Divider */
+.mp-divider { height: 1px; background: var(--bdr); margin: 2px 0; }
+
+/* ── RIGHT GRID ── */
+.mines-grid-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 24px;
+}
+
+.mines-grid-inner {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 680px;
+  aspect-ratio: 1;
+}
+
+/* ── CELL ── */
+.mc2 {
+  border-radius: 10px;
+  border: 1px solid var(--bdr);
+  background: var(--bg2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, transform .1s;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+  min-width: 0; min-height: 0;
+}
+.mc2::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+.mc2:hover:not(.mc2-gem):not(.mc2-bomb):not(.mc2-locked) {
+  background: var(--bg3);
+  border-color: rgba(34,197,94,.4);
+  transform: scale(1.04);
+}
+.mc2-gem {
+  background: rgba(34,197,94,.14);
+  border-color: rgba(34,197,94,.5);
+  cursor: default;
+}
+.mc2-bomb {
+  background: rgba(239,68,68,.14);
+  border-color: rgba(239,68,68,.5);
+  cursor: default;
+  animation: mshake .3s ease-out;
+}
+.mc2-locked { cursor: default; }
+
+@keyframes mshake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* Gem/bomb icon inside cell — absolutely positioned so it NEVER affects cell size */
+.gem-shape {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.gem-shape svg {
+  width: 52%;
+  height: 52%;
+  display: block;
+  flex-shrink: 0;
+}
+  </style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+    <span class="sb-logo-name">StackBet</span>
+  </div>
+  <div class="nav">
+    <a href="dashboard.html" class="nav-link" data-label="Dashboard"><img src="../icons/nav-lobby.png" alt=""/><span>Dashboard</span></a>
+    <a href="slots.html" class="nav-link" data-label="Slots"><img src="../icons/nav-slots.png" alt=""/><span>Slots</span></a>
+    <a href="roulette.html" class="nav-link" data-label="Roulette"><img src="../icons/nav-roulette.png" alt=""/><span>Roulette</span></a>
+    <a href="dice.html" class="nav-link" data-label="Dice"><img src="../icons/nav-dice.png" alt=""/><span>Dice</span></a>
+    <a href="mines.html" class="nav-link active" data-label="Mines"><img src="../icons/nav-mines.png" alt=""/><span>Mines</span></a>
+    <a href="crash.html" class="nav-link" data-label="Crash"><img src="../icons/nav-crash.png" alt=""/><span>Crash</span></a>
+    <a href="daycoin.html" class="nav-link" data-label="DayCoin"><img src="../icons/chip.png" alt=""/><span>DayCoin</span></a>
+    <a href="deposit.html" class="nav-link" data-label="Deposit"><img src="../icons/deposit.png" alt=""/><span>Deposit</span></a>
+    <a href="redeem.html" class="nav-link" data-label="Codes"><img src="../icons/gdice.png" alt=""/><span>Codes</span></a>
+  </div>
+  <div class="sb-user"><div class="js-avatar"></div><span class="sb-uname js-username">—</span></div>
+</nav>
+
+<div class="topbar">
+  <div class="js-gdice-wrap bal-gdice" style="display:none"><img src="../icons/gdice.png" alt="GD"/><span class="js-gdice">0</span></div>
+  <div class="bal-chip"><img src="../icons/chip.png" alt="chips"/>$<span class="js-balance">0.00</span></div>
+  <a href="deposit.html" class="btn-deposit"><img src="../icons/deposit.png" alt="deposit"/>Deposit</a>
+  <button class="btn-logout" onclick="logout()" title="Log out"><img src="../icons/logout.png" alt="logout"/></button>
+</div>
+
+<div class="content" style="padding-top:56px; height:100vh; overflow:hidden;">
+  <div class="mines-page">
+
+    <!-- ── LEFT PANEL ── -->
+    <div class="mines-panel">
+
+      <!-- Tabs -->
+      <div class="mines-tabs">
+        <button class="mines-tab active" id="tabManual" onclick="switchTab('manual')">Manual</button>
+        <button class="mines-tab"        id="tabAuto"   onclick="switchTab('auto')">Auto</button>
+      </div>
+
+      <!-- Bet Amount -->
+      <div>
+        <div class="mp-label">Bet Amount <span id="mpBetUSD" style="float:right;color:var(--text);letter-spacing:0;font-weight:600;text-transform:none">$0.00</span></div>
+        <div class="mp-bet-row">
+          <input class="mp-bet-input" type="text" id="minesBet" value="10" oninput="mpUpdateBetDisplay()"/>
+          <div class="mp-bet-actions">
+            <button class="mp-bet-btn" onclick="half('minesBet');mpUpdateBetDisplay()">½</button>
+            <button class="mp-bet-btn" onclick="dbl('minesBet');mpUpdateBetDisplay()">2×</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mines count -->
+      <div>
+        <div class="mp-label">Mines</div>
+        <select class="mp-select" id="mineCount">
+          <option>1</option><option>2</option><option selected>3</option>
+          <option>4</option><option>5</option><option>6</option>
+          <option>8</option><option>10</option><option>15</option>
+          <option>20</option><option>24</option>
+        </select>
+      </div>
+
+      <div class="mp-divider"></div>
+
+      <!-- Stats (shown during game) -->
+      <div id="mpStats" style="display:none">
+        <div class="mp-stats">
+          <div class="mp-stat">
+            <div class="mp-stat-lbl">Gems Found</div>
+            <div class="mp-stat-val" id="mpGems">0</div>
+          </div>
+          <div class="mp-stat">
+            <div class="mp-stat-lbl">Multiplier</div>
+            <div class="mp-stat-val" id="mpMulti">1.00×</div>
+          </div>
+        </div>
+        <div class="mp-profit-row" style="margin-top:8px">
+          <span class="mp-profit-lbl">PROFIT IF CASHOUT</span>
+          <span class="mp-profit-val" id="mpProfit">$0.00</span>
+        </div>
+      </div>
+
+      <div style="flex:1"></div>
+
+      <!-- Bet button / Cashout button -->
+      <button class="mp-btn" id="mpBetBtn" onclick="startMines()">Bet</button>
+      <button class="mp-btn-cashout hidden" id="mpCashBtn" onclick="minesCashout()">
+        Cash Out — <span id="mpCashLabel">0.00</span>
+      </button>
+
+    </div>
+
+    <!-- ── RIGHT GRID ── -->
+    <div class="mines-grid-area">
+      <div class="mines-grid-inner" id="mGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="../js/config.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/session.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+// ── SVG icons ─────────────────────────────────────────────────
+const GEM_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#4ade80"/>
+      <stop offset="50%"  stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+    <linearGradient id="gsh" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#86efac" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#15803d" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <polygon points="50,8 82,32 72,88 28,88 18,32" fill="url(#gg)"/>
+  <polygon points="50,8 82,32 50,42 18,32" fill="url(#gsh)"/>
+  <polygon points="50,8 65,32 50,42 35,32" fill="rgba(255,255,255,0.35)"/>
+  <polygon points="50,42 82,32 72,88 28,88 18,32" fill="rgba(0,0,0,0.15)"/>
+</svg>`;
+
+const BOMB_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg2" cx="40%" cy="35%">
+      <stop offset="0%"   stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#7f1d1d"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="55" r="32" fill="url(#bg2)"/>
+  <rect x="47" y="20" width="6" height="18" rx="3" fill="#6b7280"/>
+  <ellipse cx="58" cy="22" rx="8" ry="5" fill="none" stroke="#f59e0b" stroke-width="3"/>
+  <circle cx="38" cy="42" r="6" fill="rgba(255,255,255,0.2)"/>
+  <line x1="20" y1="30" x2="32" y2="42" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="30" y1="22" x2="36" y2="36" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+</svg>`;
+
+// ── State ─────────────────────────────────────────────────────
+let mg = { active:false, bombs:[], revealed:[], bet:0, gems:0, mineCount:3, gdiceSpent:0, chipsSpent:0 };
+let mCashingOut = false;
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", async () => {
+  await fillShell();
+  buildGrid();
+  mpUpdateBetDisplay();
+});
+
+function switchTab(t) {
+  document.getElementById("tabManual").classList.toggle("active", t==="manual");
+  document.getElementById("tabAuto"  ).classList.toggle("active", t==="auto");
+}
+
+function mpUpdateBetDisplay() {
+  const bet = parseChips(document.getElementById("minesBet").value) || 0;
+  document.getElementById("mpBetUSD").textContent = "$" + fmtC(bet);
+}
+
+function updateCashLabel() {
+  const multi  = calcMulti(mg.mineCount, mg.gems);
+  const payout = parseFloat((mg.bet * multi).toFixed(4));
+  document.getElementById("mpCashLabel").textContent = fmtC(payout);
+  document.getElementById("mpGems").textContent      = mg.gems;
+  document.getElementById("mpMulti").textContent     = multi.toFixed(2) + "×";
+  document.getElementById("mpProfit").textContent    = fmtD(mg.bet * (multi - 1));
+}
+
+// ── Grid ──────────────────────────────────────────────────────
+function buildGrid() {
+  const grid = document.getElementById("mGrid");
+  grid.innerHTML = "";
+  for (let i = 0; i < 25; i++) {
+    const c = document.createElement("div");
+    c.className = "mc2";
+    c.dataset.i = i;
+    c.onclick = () => reveal(i);
+    grid.appendChild(c);
+  }
+}
+
+function cellEl(i) {
+  return document.querySelector(`.mc2[data-i="${i}"]`);
+}
+
+function calcMulti(mines, gems) {
+  let prob = 1;
+  for (let i = 0; i < gems; i++) prob *= (25 - mines - i) / (25 - i);
+  return parseFloat(Math.max(1.01, 0.95 / prob).toFixed(2));
+}
+
+// ── Start ─────────────────────────────────────────────────────
+function startMines() {
+  if (mg.active) return;
+  if (!checkBet("minesBet")) return;
+  const bet       = getBet("minesBet");
+  const mineCount = parseInt(document.getElementById("mineCount").value);
+  const { gdiceSpent, chipsSpent } = splitBet(bet);
+
+  const bombs = [];
+  while (bombs.length < mineCount) {
+    const r = Math.floor(Math.random() * 25);
+    if (!bombs.includes(r)) bombs.push(r);
+  }
+
+  mg = { active:true, bombs, revealed:[], bet, gems:0, mineCount, gdiceSpent, chipsSpent };
+  mCashingOut = false;
+
+  buildGrid();
+  document.getElementById("mpBetBtn").classList.add("hidden");
+  document.getElementById("mpCashBtn").classList.remove("hidden");
+  document.getElementById("mpCashBtn").disabled = false;
+  document.getElementById("mpStats").style.display = "block";
+  document.getElementById("mineCount").disabled = true;
+  updateCashLabel();
+}
+
+// ── Reveal ────────────────────────────────────────────────────
+function reveal(idx) {
+  if (!mg.active || mg.revealed.includes(idx)) return;
+  mg.revealed.push(idx);
+  const cell = cellEl(idx);
+
+  if (mg.bombs.includes(idx)) {
+    // Hit a bomb
+    cell.className = "mc2 mc2-bomb";
+    cell.innerHTML = `<div class="gem-shape">${BOMB_SVG}</div>`;
+    mg.active = false;
+
+    // Reveal all bombs
+    mg.bombs.forEach(b => {
+      const bc = cellEl(b);
+      if (bc && !mg.revealed.slice(0,-1).includes(b)) {
+        bc.className = "mc2 mc2-bomb mc2-locked";
+        bc.innerHTML = `<div class="gem-shape">${BOMB_SVG}</div>`;
+      }
+    });
+    // Lock remaining cells
+    document.querySelectorAll(".mc2:not(.mc2-gem):not(.mc2-bomb)").forEach(c => {
+      c.classList.add("mc2-locked");
+    });
+
+    document.getElementById("mpCashBtn").classList.add("hidden");
+    finishBet("Mines", mg.bet, 0, 0, false, mg.gdiceSpent, mg.chipsSpent);
+    toast("💣 BOOM! Lost " + fmtD(mg.bet), "lose");
+    setTimeout(resetMines, 2200);
+
+  } else {
+    // Safe — gem
+    mg.gems++;
+    cell.className = "mc2 mc2-gem";
+    cell.innerHTML = `<div class="gem-shape">${GEM_SVG}</div>`;
+    updateCashLabel();
+  }
+}
+
+// ── Cashout ───────────────────────────────────────────────────
+async function minesCashout() {
+  if (!mg.active || mg.gems === 0) { toast("Find at least one gem first!", "info"); return; }
+  if (mCashingOut) return;
+  mCashingOut = true;
+  mg.active   = false;
+
+  const multi  = calcMulti(mg.mineCount, mg.gems);
+  const payout = parseFloat((mg.bet * multi).toFixed(4));
+
+  document.getElementById("mpCashBtn").disabled = true;
+
+  // Reveal all bombs on cashout
+  mg.bombs.forEach(b => {
+    const bc = cellEl(b);
+    if (bc) {
+      bc.className = "mc2 mc2-bomb mc2-locked";
+      bc.innerHTML = `<div class="gem-shape">${BOMB_SVG}</div>`;
+    }
+  });
+  document.querySelectorAll(".mc2:not(.mc2-gem):not(.mc2-bomb)").forEach(c => {
+    c.classList.add("mc2-locked");
+  });
+
+  await finishBet("Mines", mg.bet, multi, payout, true, mg.gdiceSpent, mg.chipsSpent);
+  toast("Cashed out " + multi.toFixed(2) + "× · +" + fmtD(payout - mg.bet), "win");
+  setTimeout(resetMines, 2000);
+}
+
+// ── Reset ─────────────────────────────────────────────────────
+function resetMines() {
+  mg = { active:false, bombs:[], revealed:[], bet:0, gems:0, mineCount:3, gdiceSpent:0, chipsSpent:0 };
+  mCashingOut = false;
+  document.getElementById("mpBetBtn").classList.remove("hidden");
+  document.getElementById("mpCashBtn").classList.add("hidden");
+  document.getElementById("mpStats").style.display = "none";
+  document.getElementById("mineCount").disabled = false;
+  buildGrid();
+}
+</script>
+</body>
+</html>

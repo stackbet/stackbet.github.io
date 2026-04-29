@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StackBet — Redeem Code</title>
+  <link rel="icon" href="../icons/favicon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/app.css"/>
+  <link rel="stylesheet" href="../css/admin.css"/>
+  <style>
+    .redeem-wrap { max-width: 480px; margin: 0 auto; }
+
+    .redeem-card {
+      background: var(--bg2); border: 1px solid var(--bdr);
+      border-radius: 16px; padding: 36px 32px; text-align: center;
+    }
+    .redeem-icon { font-size: 48px; margin-bottom: 14px; }
+    .redeem-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .redeem-sub   { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+
+    .code-input-wrap { position: relative; margin-bottom: 14px; }
+    .code-input {
+      width: 100%; height: 56px;
+      background: var(--bg3); border: 2px solid var(--bdr); border-radius: 12px;
+      color: var(--text); font-size: 22px; font-weight: 800; font-family: 'DM Mono', monospace;
+      text-align: center; letter-spacing: 4px; text-transform: uppercase;
+      outline: none; transition: border-color .18s;
+    }
+    .code-input:focus { border-color: var(--green); }
+    .code-input::placeholder { font-size: 14px; letter-spacing: 1px; font-weight: 500; font-family: 'DM Sans', sans-serif; }
+
+    .btn-redeem {
+      width: 100%; height: 52px;
+      background: var(--green); border: none; border-radius: 12px;
+      color: #000; font-size: 16px; font-weight: 800; letter-spacing: 1px;
+      transition: background .14s, transform .12s, box-shadow .14s;
+    }
+    .btn-redeem:hover:not(:disabled) {
+      background: var(--green2);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px var(--gglow);
+    }
+    .btn-redeem:disabled { background: var(--bdr); color: var(--muted); cursor: not-allowed; }
+
+    .redeem-msg {
+      margin-top: 14px; font-size: 14px; font-weight: 600;
+      min-height: 22px; transition: color .2s;
+    }
+    .redeem-msg.ok   { color: var(--green); }
+    .redeem-msg.err  { color: var(--red); }
+
+    /* Success banner */
+    .redeem-success {
+      display: none; margin-top: 20px;
+      background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.3);
+      border-radius: 12px; padding: 20px;
+    }
+    .redeem-success.show { display: block; }
+    .rs-icon  { font-size: 36px; margin-bottom: 8px; }
+    .rs-title { font-size: 18px; font-weight: 800; color: var(--green); margin-bottom: 4px; }
+    .rs-sub   { font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+    <span class="sb-logo-name">StackBet</span>
+  </div>
+      <div class="nav">
+    <a href="dashboard.html" class="nav-link" data-label="Dashboard"><img src="../icons/nav-lobby.png" alt=""/><span>Dashboard</span></a>
+    <a href="slots.html" class="nav-link" data-label="Slots"><img src="../icons/nav-slots.png" alt=""/><span>Slots</span></a>
+    <a href="roulette.html" class="nav-link" data-label="Roulette"><img src="../icons/nav-roulette.png" alt=""/><span>Roulette</span></a>
+    <a href="dice.html" class="nav-link" data-label="Dice"><img src="../icons/nav-dice.png" alt=""/><span>Dice</span></a>
+    <a href="mines.html" class="nav-link" data-label="Mines"><img src="../icons/nav-mines.png" alt=""/><span>Mines</span></a>
+    <a href="crash.html" class="nav-link" data-label="Crash"><img src="../icons/nav-crash.png" alt=""/><span>Crash</span></a>
+    <a href="daycoin.html" class="nav-link" data-label="DayCoin"><img src="../icons/chip.png" alt=""/><span>DayCoin</span></a>
+    <a href="deposit.html" class="nav-link" data-label="Deposit"><img src="../icons/deposit.png" alt=""/><span>Deposit</span></a>
+    <a href="redeem.html" class="nav-link active" data-label="Codes"><img src="../icons/gdice.png" alt=""/><span>Codes</span></a>
+  </div>
+
+  <div class="sb-user">
+    <div class="js-avatar"></div>
+    <span class="sb-uname js-username">—</span>
+  </div>
+</nav>
+
+<div class="topbar">
+  <div class="js-gdice-wrap bal-gdice" style="display:none"><img src="../icons/gdice.png" alt="GD"/><span class="js-gdice">0</span></div>
+  <div class="bal-chip"><img src="../icons/chip.png" alt="chips"/>$<span class="js-balance">0.00</span></div>
+  <a href="deposit.html" class="btn-deposit"><img src="../icons/deposit.png" alt="deposit"/>Deposit</a>
+  <button class="btn-logout" onclick="logout()" title="Log out"><img src="../icons/logout.png" alt="logout"/></button>
+</div>
+<div class="content">
+  <div class="page-inner">
+    <div class="redeem-wrap">
+      <div class="redeem-card">
+        <div class="redeem-icon">🎲</div>
+        <div class="redeem-title">Redeem a Code</div>
+        <div class="redeem-sub">
+          Enter a promo code to receive Golden Dice — a bonus currency<br>
+          you can use on any game. Winnings from Golden Dice are real chips.
+        </div>
+
+        <div class="code-input-wrap">
+          <input class="code-input" id="codeInput" type="text" maxlength="24"
+                 placeholder="Enter code…" autocomplete="off" autocorrect="off"
+                 spellcheck="false" oninput="this.value=this.value.toUpperCase()"
+                 onkeydown="if(event.key==='Enter')doRedeem()"/>
+        </div>
+
+        <button class="btn-redeem" id="redeemBtn" onclick="doRedeem()">Redeem</button>
+
+        <div class="redeem-msg" id="redeemMsg"></div>
+
+        <div class="redeem-success" id="redeemSuccess">
+          <div class="rs-icon">🎲</div>
+          <div class="rs-title" id="rsTitle">+0 Golden Dice!</div>
+          <div class="rs-sub"  id="rsSub">Your Golden Dice have been added to your balance.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/session.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => { await fillShell(); });
+
+async function doRedeem() {
+  const code = document.getElementById("codeInput").value.trim().toUpperCase();
+  const btn  = document.getElementById("redeemBtn");
+  const msg  = document.getElementById("redeemMsg");
+  const succ = document.getElementById("redeemSuccess");
+
+  msg.textContent = ""; msg.className = "redeem-msg";
+  succ.classList.remove("show");
+
+  if (!code) { setRedeemMsg("Enter a code first.", "err"); return; }
+
+  const u = sessionGet();
+  if (!u) { setRedeemMsg("Please log in first.", "err"); return; }
+
+  btn.disabled = true; btn.textContent = "Redeeming…";
+
+  try {
+    const result = await dbRedeemCode(code, u.discord_id);
+
+    // Update session with new gdice
+    sessionSetGdice(result.new_gdice);
+    refreshBalance();
+
+    // Show success
+    document.getElementById("rsTitle").textContent =
+      "+" + fmtC(result.gdice_amount) + " Golden Dice!";
+    document.getElementById("rsSub").textContent =
+      "Your total Golden Dice balance: " + fmtC(result.new_gdice);
+    succ.classList.add("show");
+    document.getElementById("codeInput").value = "";
+    toast("🎲 +" + fmtC(result.gdice_amount) + " Golden Dice!", "win");
+
+  } catch (e) {
+    setRedeemMsg(e.message || "Invalid code.", "err");
+  }
+
+  btn.disabled = false; btn.textContent = "Redeem";
+}
+
+function setRedeemMsg(text, type) {
+  const el = document.getElementById("redeemMsg");
+  el.textContent = text;
+  el.className   = "redeem-msg " + type;
+}
+</script>
+</body>
+</html>

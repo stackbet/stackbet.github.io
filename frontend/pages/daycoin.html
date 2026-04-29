@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StackBet — DayCoin</title>
+  <link rel="icon" href="../icons/favicon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/app.css"/>
+  <link rel="stylesheet" href="../css/admin.css"/>
+  <style>
+/* ═══════════════════════════════════════════════════════════════
+   DayCoin — all styles self-contained
+═══════════════════════════════════════════════════════════════ */
+
+.dc-wrap { max-width: 1100px; margin: 0 auto; }
+
+/* ── TOP TICKER BAR ── */
+.dc-ticker {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  background: var(--bg2); border: 1px solid var(--bdr);
+  border-radius: 14px; padding: 18px 24px; margin-bottom: 20px;
+}
+.dc-ticker-price {
+  display: flex; align-items: baseline; gap: 8px;
+}
+.dc-ticker-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase;
+}
+.dc-ticker-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 36px; font-weight: 700;
+  color: var(--text);
+  transition: color .4s;
+}
+.dc-ticker-val.up   { color: var(--green); }
+.dc-ticker-val.down { color: var(--red); }
+
+.dc-ticker-change {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 14px; font-weight: 700; font-family: 'DM Mono', monospace;
+  padding: 4px 10px; border-radius: 6px;
+}
+.dc-ticker-change.up   { background: rgba(34,197,94,.12); color: var(--green); }
+.dc-ticker-change.down { background: rgba(239,68,68,.12); color: var(--red); }
+.dc-ticker-change.flat { background: var(--bg3); color: var(--muted); }
+
+.dc-ticker-divider { width: 1px; height: 36px; background: var(--bdr); }
+
+.dc-ticker-stat { display: flex; flex-direction: column; gap: 2px; }
+.dc-ticker-stat .lbl { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+.dc-ticker-stat .val { font-size: 16px; font-weight: 700; font-family: 'DM Mono', monospace; color: var(--text); }
+
+.dc-live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 8px var(--green);
+  animation: dcPulse 2s ease-in-out infinite;
+  margin-left: auto;
+}
+@keyframes dcPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(0.8)} }
+
+/* ── MAIN GRID ── */
+.dc-main { display: grid; grid-template-columns: 1fr 320px; gap: 18px; }
+@media(max-width:860px) { .dc-main { grid-template-columns: 1fr; } }
+
+/* ── CHART CARD ── */
+.dc-chart-card {
+  background: var(--bg2); border: 1px solid var(--bdr);
+  border-radius: 14px; padding: 20px; overflow: hidden;
+}
+.dc-chart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.dc-chart-title {
+  font-size: 13px; font-weight: 700; color: var(--text);
+}
+.dc-chart-tabs { display: flex; gap: 4px; }
+.dc-chart-tab {
+  padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
+  border: 1px solid var(--bdr); background: none; color: var(--muted);
+  cursor: pointer; transition: .14s;
+}
+.dc-chart-tab.active { background: var(--green); color: #000; border-color: var(--green); }
+.dc-chart-tab:hover:not(.active) { color: var(--text); border-color: var(--muted); }
+
+.dc-canvas-wrap {
+  position: relative; width: 100%; height: 260px;
+}
+#dcCanvas {
+  width: 100%; height: 100%; display: block;
+  cursor: crosshair;
+}
+
+/* Hover tooltip */
+.dc-tooltip {
+  position: absolute; pointer-events: none;
+  background: var(--bg3); border: 1px solid var(--bdr);
+  border-radius: 8px; padding: 8px 12px;
+  font-size: 12px; font-family: 'DM Mono', monospace;
+  color: var(--text); white-space: nowrap;
+  opacity: 0; transition: opacity .15s;
+  z-index: 10;
+}
+.dc-tooltip.show { opacity: 1; }
+
+/* ── SIDE PANEL ── */
+.dc-side { display: flex; flex-direction: column; gap: 14px; }
+
+/* Holdings card */
+.dc-holdings {
+  background: var(--bg2); border: 1px solid var(--bdr);
+  border-radius: 14px; padding: 20px;
+}
+.dc-holdings-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 14px;
+}
+.dc-holding-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--bdr);
+}
+.dc-holding-row:last-child { border-bottom: none; padding-bottom: 0; }
+.dc-holding-lbl { font-size: 12px; color: var(--muted); }
+.dc-holding-val { font-size: 15px; font-weight: 700; font-family: 'DM Mono', monospace; }
+.dc-holding-val.green { color: var(--green); }
+.dc-holding-pnl { font-size: 12px; font-weight: 600; }
+.dc-holding-pnl.pos { color: var(--green); }
+.dc-holding-pnl.neg { color: var(--red); }
+
+/* Trade card */
+.dc-trade {
+  background: var(--bg2); border: 1px solid var(--bdr);
+  border-radius: 14px; padding: 20px;
+}
+.dc-trade-tabs {
+  display: flex; background: var(--bg3); border-radius: 10px;
+  padding: 3px; gap: 3px; margin-bottom: 16px;
+}
+.dc-trade-tab {
+  flex: 1; height: 36px; border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  background: none; transition: .14s;
+}
+.dc-trade-tab.buy  { color: var(--muted); }
+.dc-trade-tab.sell { color: var(--muted); }
+.dc-trade-tab.buy.active  { background: var(--green); color: #000; }
+.dc-trade-tab.sell.active { background: var(--red); color: #fff; }
+.dc-trade-tab:not(.active):hover { color: var(--text); }
+
+.dc-input-group { margin-bottom: 12px; }
+.dc-input-lbl {
+  display: block; font-size: 10px; font-weight: 700;
+  letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.dc-input-row {
+  display: flex; background: var(--bg3); border: 1px solid var(--bdr);
+  border-radius: 8px; overflow: hidden; transition: border-color .18s;
+}
+.dc-input-row:focus-within { border-color: var(--green); }
+.dc-input {
+  flex: 1; height: 44px; background: none; border: none;
+  color: var(--text); font-size: 15px; font-weight: 600;
+  padding: 0 12px; outline: none;
+}
+.dc-input-unit {
+  display: flex; align-items: center; padding: 0 12px;
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  border-left: 1px solid var(--bdr); white-space: nowrap;
+}
+.dc-input-max {
+  display: flex; align-items: center; padding: 0 10px;
+  font-size: 11px; font-weight: 700; color: var(--green);
+  border-left: 1px solid var(--bdr); cursor: pointer;
+  background: none; border-top: none; border-right: none; border-bottom: none;
+  transition: background .12s;
+}
+.dc-input-max:hover { background: rgba(34,197,94,.08); }
+
+.dc-trade-preview {
+  background: var(--bg3); border: 1px solid var(--bdr);
+  border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;
+  font-size: 13px; color: var(--muted); line-height: 1.8;
+}
+.dc-trade-preview strong { color: var(--text); font-family: 'DM Mono', monospace; }
+
+.dc-btn-buy {
+  width: 100%; height: 48px; border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 800; cursor: pointer; transition: .14s;
+  background: var(--green); color: #000;
+}
+.dc-btn-buy:hover:not(:disabled) { background: var(--green2); box-shadow: 0 0 20px var(--gglow); }
+.dc-btn-sell {
+  width: 100%; height: 48px; border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 800; cursor: pointer; transition: .14s;
+  background: var(--red); color: #fff;
+}
+.dc-btn-sell:hover:not(:disabled) { background: #dc2626; }
+.dc-btn-buy:disabled, .dc-btn-sell:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── HISTORY TABLE ── */
+.dc-history-card {
+  background: var(--bg2); border: 1px solid var(--bdr);
+  border-radius: 14px; padding: 20px; margin-top: 18px;
+}
+.dc-history-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase; margin-bottom: 14px;
+}
+.dc-history-table { width: 100%; border-collapse: collapse; }
+.dc-history-table th {
+  text-align: left; font-size: 10px; font-weight: 700;
+  letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase;
+  padding: 8px 12px; border-bottom: 1px solid var(--bdr);
+}
+.dc-history-table td {
+  padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(30,45,69,.5);
+  font-family: 'DM Mono', monospace;
+}
+.dc-history-table tr:last-child td { border-bottom: none; }
+.dc-history-table td.up   { color: var(--green); }
+.dc-history-table td.down { color: var(--red); }
+.dc-history-table td.note { font-family: 'DM Sans', sans-serif; color: var(--muted); font-size: 12px; }
+
+/* ── PRICE FLASH ANIMATION ── */
+@keyframes dcFlashUp   { 0%{background:rgba(34,197,94,.18)} 100%{background:transparent} }
+@keyframes dcFlashDown { 0%{background:rgba(239,68,68,.18)} 100%{background:transparent} }
+.dc-flash-up   { animation: dcFlashUp   .8s ease-out; }
+.dc-flash-down { animation: dcFlashDown .8s ease-out; }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+    <span class="sb-logo-name">StackBet</span>
+  </div>
+  <div class="nav">
+    <a href="dashboard.html" class="nav-link" data-label="Dashboard"><img src="../icons/nav-lobby.png" alt=""/><span>Dashboard</span></a>
+    <a href="slots.html"     class="nav-link" data-label="Slots"><img src="../icons/nav-slots.png" alt=""/><span>Slots</span></a>
+    <a href="roulette.html"  class="nav-link" data-label="Roulette"><img src="../icons/nav-roulette.png" alt=""/><span>Roulette</span></a>
+    <a href="dice.html"      class="nav-link" data-label="Dice"><img src="../icons/nav-dice.png" alt=""/><span>Dice</span></a>
+    <a href="mines.html"     class="nav-link" data-label="Mines"><img src="../icons/nav-mines.png" alt=""/><span>Mines</span></a>
+    <a href="crash.html"     class="nav-link" data-label="Crash"><img src="../icons/nav-crash.png" alt=""/><span>Crash</span></a>
+    <a href="daycoin.html"   class="nav-link active" data-label="DayCoin"><img src="../icons/chip.png" alt=""/><span>DayCoin</span></a>
+    <a href="deposit.html"   class="nav-link" data-label="Deposit"><img src="../icons/deposit.png" alt=""/><span>Deposit</span></a>
+    <a href="redeem.html"    class="nav-link" data-label="Codes"><img src="../icons/gdice.png" alt=""/><span>Codes</span></a>
+  </div>
+  <div class="sb-user"><div class="js-avatar"></div><span class="sb-uname js-username">—</span></div>
+</nav>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+  <div class="js-gdice-wrap bal-gdice" style="display:none"><img src="../icons/gdice.png" alt="GD"/><span class="js-gdice">0</span></div>
+  <div class="bal-chip"><img src="../icons/chip.png" alt="chips"/>$<span class="js-balance">0.00</span></div>
+  <a href="deposit.html" class="btn-deposit"><img src="../icons/deposit.png" alt="deposit"/>Deposit</a>
+  <button class="btn-logout" onclick="logout()" title="Log out"><img src="../icons/logout.png" alt="logout"/></button>
+</div>
+
+<!-- ── CONTENT ── -->
+<div class="content">
+<div class="page-inner">
+<div class="dc-wrap">
+
+  <!-- Ticker -->
+  <div class="dc-ticker" id="dcTicker">
+    <div class="dc-ticker-price">
+      <div>
+        <div class="dc-ticker-label">DayCoin Price</div>
+        <div class="dc-ticker-val" id="dcPrice">$1.0000</div>
+      </div>
+    </div>
+    <div class="dc-ticker-change flat" id="dcChange">— 0.00%</div>
+    <div class="dc-ticker-divider"></div>
+    <div class="dc-ticker-stat">
+      <span class="lbl">All-Time High</span>
+      <span class="val" id="dcATH">$1.0000</span>
+    </div>
+    <div class="dc-ticker-divider"></div>
+    <div class="dc-ticker-stat">
+      <span class="lbl">All-Time Low</span>
+      <span class="val" id="dcATL">$1.0000</span>
+    </div>
+    <div class="dc-ticker-divider"></div>
+    <div class="dc-ticker-stat">
+      <span class="lbl">Price Points</span>
+      <span class="val" id="dcPoints">1</span>
+    </div>
+    <div class="dc-live-dot"></div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="dc-main">
+
+    <!-- Chart -->
+    <div class="dc-chart-card">
+      <div class="dc-chart-header">
+        <div class="dc-chart-title">DayCoin / Chip Price History</div>
+        <div class="dc-chart-tabs">
+          <button class="dc-chart-tab active" data-mode="line" onclick="dcSetChartMode('line',this)">Line</button>
+          <button class="dc-chart-tab" data-mode="candle" onclick="dcSetChartMode('candle',this)">Candle</button>
+        </div>
+      </div>
+      <div class="dc-canvas-wrap">
+        <canvas id="dcCanvas"></canvas>
+        <div class="dc-tooltip" id="dcTooltip"></div>
+      </div>
+    </div>
+
+    <!-- Side panel -->
+    <div class="dc-side">
+
+      <!-- Holdings -->
+      <div class="dc-holdings" id="dcHoldingsCard">
+        <div class="dc-holdings-title">My Holdings</div>
+        <div class="dc-holding-row">
+          <span class="dc-holding-lbl">DayCoin owned</span>
+          <span class="dc-holding-val green" id="dcOwned">0.0000</span>
+        </div>
+        <div class="dc-holding-row">
+          <span class="dc-holding-lbl">Value in chips</span>
+          <span class="dc-holding-val" id="dcValue">$0.0000</span>
+        </div>
+        <div class="dc-holding-row">
+          <span class="dc-holding-lbl">Unrealised P&L</span>
+          <span class="dc-holding-val dc-holding-pnl" id="dcPnl">—</span>
+        </div>
+      </div>
+
+      <!-- Trade -->
+      <div class="dc-trade">
+        <div class="dc-trade-tabs">
+          <button class="dc-trade-tab buy active" id="dcTabBuy"  onclick="dcSwitchTab('buy')">Buy</button>
+          <button class="dc-trade-tab sell"       id="dcTabSell" onclick="dcSwitchTab('sell')">Sell</button>
+        </div>
+
+        <!-- BUY PANEL -->
+        <div id="dcBuyPanel">
+          <div class="dc-input-group">
+            <label class="dc-input-lbl">Chips to spend</label>
+            <div class="dc-input-row">
+              <input class="dc-input" type="text" id="dcBuyAmt" placeholder="0.00" oninput="dcUpdateBuyPreview()"/>
+              <button class="dc-input-max" onclick="dcMaxBuy()">MAX</button>
+              <span class="dc-input-unit">chips</span>
+            </div>
+          </div>
+          <div class="dc-trade-preview" id="dcBuyPreview">
+            Enter an amount to see how many DayCoins you'll receive.
+          </div>
+          <button class="dc-btn-buy" id="dcBuyBtn" onclick="dcBuy()">Buy DayCoin</button>
+        </div>
+
+        <!-- SELL PANEL -->
+        <div id="dcSellPanel" style="display:none">
+          <div class="dc-input-group">
+            <label class="dc-input-lbl">DayCoins to sell</label>
+            <div class="dc-input-row">
+              <input class="dc-input" type="text" id="dcSellAmt" placeholder="0.0000" oninput="dcUpdateSellPreview()"/>
+              <button class="dc-input-max" onclick="dcMaxSell()">MAX</button>
+              <span class="dc-input-unit">DC</span>
+            </div>
+          </div>
+          <div class="dc-trade-preview" id="dcSellPreview">
+            Enter an amount to see how many chips you'll receive.
+          </div>
+          <button class="dc-btn-sell" id="dcSellBtn" onclick="dcSell()">Sell DayCoin</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Price history table -->
+  <div class="dc-history-card">
+    <div class="dc-history-title">Price History</div>
+    <table class="dc-history-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Price</th>
+          <th>Change</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody id="dcHistoryBody">
+        <tr><td colspan="4" style="color:var(--muted);text-align:center;padding:20px">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ── SCRIPTS ── -->
+<script src="../js/config.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/session.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  DayCoin — client-side logic
+// ═══════════════════════════════════════════════════════════════
+
+// ── State ─────────────────────────────────────────────────────
+let dcPrice    = 1.0;          // current price
+let dcHistory  = [];           // [{price, created_at, note}]
+let dcOwned    = 0;            // how many DayCoins this user holds
+let dcAvgBuy   = 0;            // average buy price for P&L
+let dcChartMode = "line";      // "line" | "candle"
+let dcPollTimer = null;
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", async () => {
+  const u = await fillShell();
+  if (!u) return;
+  await dcLoad();
+  dcStartPoll();
+});
+
+async function dcLoad() {
+  try {
+    // Load price + history in parallel
+    const [stateRows, histRows, holdingRows] = await Promise.all([
+      sbGet("daycoin_state",    "?id=eq.1"),
+      sbGet("daycoin_history",  "?order=created_at.asc&limit=200"),
+      sbGet("daycoin_holdings", `?discord_id=eq.${sessionGet().discord_id}`),
+    ]);
+
+    dcPrice   = stateRows.length ? parseFloat(stateRows[0].price) : 1.0;
+    dcHistory = histRows;
+    dcOwned   = holdingRows.length ? parseFloat(holdingRows[0].amount) : 0;
+
+    dcRenderTicker();
+    dcRenderHoldings();
+    dcRenderChart();
+    dcRenderHistoryTable();
+  } catch(e) {
+    console.error("DayCoin load error:", e);
+  }
+}
+
+// Poll every 8s for price updates
+function dcStartPoll() {
+  dcPollTimer = setInterval(async () => {
+    try {
+      const [stateRows, newHist] = await Promise.all([
+        sbGet("daycoin_state",   "?id=eq.1"),
+        sbGet("daycoin_history", "?order=created_at.asc&limit=200"),
+      ]);
+      const newPrice = stateRows.length ? parseFloat(stateRows[0].price) : dcPrice;
+      if (newPrice !== dcPrice || newHist.length !== dcHistory.length) {
+        const oldPrice = dcPrice;
+        dcPrice   = newPrice;
+        dcHistory = newHist;
+        dcRenderTicker(oldPrice);
+        dcRenderHoldings();
+        dcRenderChart();
+        dcRenderHistoryTable();
+      }
+    } catch(e) { /* silent */ }
+  }, 8000);
+}
+
+// ── Ticker ────────────────────────────────────────────────────
+function dcRenderTicker(oldPrice) {
+  const priceEl  = document.getElementById("dcPrice");
+  const changeEl = document.getElementById("dcChange");
+  const athEl    = document.getElementById("dcATH");
+  const atlEl    = document.getElementById("dcATL");
+  const ptsEl    = document.getElementById("dcPoints");
+
+  priceEl.textContent = "$" + dcPrice.toFixed(4);
+
+  // Determine direction vs first price point
+  const firstPrice = dcHistory.length ? dcHistory[0].price : 1.0;
+  const pctChange  = firstPrice > 0 ? ((dcPrice - firstPrice) / firstPrice * 100) : 0;
+  const isUp       = dcPrice > firstPrice;
+  const isDown     = dcPrice < firstPrice;
+
+  priceEl.className = "dc-ticker-val" + (isUp ? " up" : isDown ? " down" : "");
+
+  const sign = pctChange >= 0 ? "▲" : "▼";
+  changeEl.textContent = `${sign} ${Math.abs(pctChange).toFixed(2)}%`;
+  changeEl.className   = "dc-ticker-change " + (isUp ? "up" : isDown ? "down" : "flat");
+
+  // Flash on price change
+  if (oldPrice !== undefined && oldPrice !== dcPrice) {
+    const ticker = document.getElementById("dcTicker");
+    const cls    = dcPrice > oldPrice ? "dc-flash-up" : "dc-flash-down";
+    ticker.classList.remove("dc-flash-up","dc-flash-down");
+    void ticker.offsetWidth; // force reflow
+    ticker.classList.add(cls);
+    setTimeout(() => ticker.classList.remove(cls), 900);
+  }
+
+  const prices = dcHistory.map(h => h.price);
+  if (prices.length) {
+    athEl.textContent = "$" + Math.max(...prices).toFixed(4);
+    atlEl.textContent = "$" + Math.min(...prices).toFixed(4);
+  }
+  ptsEl.textContent = dcHistory.length;
+}
+
+// ── Holdings ──────────────────────────────────────────────────
+function dcRenderHoldings() {
+  const value   = dcOwned * dcPrice;
+  const costBasis = dcOwned * dcAvgBuy;
+  const pnl     = value - costBasis;
+  const pnlPct  = costBasis > 0 ? (pnl / costBasis * 100) : 0;
+
+  document.getElementById("dcOwned").textContent = dcOwned.toFixed(4) + " DC";
+  document.getElementById("dcValue").textContent = "$" + value.toFixed(4);
+
+  const pnlEl = document.getElementById("dcPnl");
+  if (dcOwned <= 0 || dcAvgBuy <= 0) {
+    pnlEl.textContent = "—";
+    pnlEl.className   = "dc-holding-val dc-holding-pnl";
+  } else {
+    const sign = pnl >= 0 ? "+" : "";
+    pnlEl.textContent = `${sign}$${pnl.toFixed(4)} (${sign}${pnlPct.toFixed(2)}%)`;
+    pnlEl.className   = "dc-holding-val dc-holding-pnl " + (pnl >= 0 ? "pos" : "neg");
+  }
+
+  dcUpdateBuyPreview();
+  dcUpdateSellPreview();
+}
+
+// ── Chart ─────────────────────────────────────────────────────
+function dcSetChartMode(mode, btn) {
+  dcChartMode = mode;
+  document.querySelectorAll(".dc-chart-tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  dcRenderChart();
+}
+
+function dcRenderChart() {
+  const canvas = document.getElementById("dcCanvas");
+  const dpr    = window.devicePixelRatio || 1;
+  const rect   = canvas.parentElement.getBoundingClientRect();
+  canvas.width  = rect.width  * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width  = rect.width  + "px";
+  canvas.style.height = rect.height + "px";
+
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+
+  if (dcHistory.length < 2) {
+    ctx.fillStyle = "rgba(100,116,139,.4)";
+    ctx.font = "13px DM Sans";
+    ctx.textAlign = "center";
+    ctx.fillText("Waiting for price history…", W/2, H/2);
+    return;
+  }
+
+  const prices   = dcHistory.map(h => h.price);
+  const maxP     = Math.max(...prices) * 1.05;
+  const minP     = Math.min(...prices) * 0.95;
+  const range    = maxP - minP || 1;
+  const PAD_L    = 58, PAD_R = 16, PAD_T = 16, PAD_B = 36;
+  const cW       = W - PAD_L - PAD_R;
+  const cH       = H - PAD_T - PAD_B;
+
+  const toX = i   => PAD_L + (i / (prices.length - 1)) * cW;
+  const toY = p   => PAD_T + (1 - (p - minP) / range) * cH;
+
+  // ── Grid lines ──
+  ctx.strokeStyle = "rgba(30,45,69,.8)";
+  ctx.lineWidth   = 1;
+  const gridLines = 5;
+  for (let i = 0; i <= gridLines; i++) {
+    const y = PAD_T + (i / gridLines) * cH;
+    const p = maxP - (i / gridLines) * range;
+    ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke();
+    ctx.fillStyle   = "rgba(100,116,139,.7)";
+    ctx.font        = "10px DM Mono";
+    ctx.textAlign   = "right";
+    ctx.fillText("$" + p.toFixed(2), PAD_L - 6, y + 3);
+  }
+
+  // ── X-axis time labels ──
+  const labelCount = Math.min(6, dcHistory.length);
+  ctx.fillStyle   = "rgba(100,116,139,.7)";
+  ctx.font        = "10px DM Mono";
+  ctx.textAlign   = "center";
+  for (let i = 0; i < labelCount; i++) {
+    const idx = Math.round(i / (labelCount - 1) * (dcHistory.length - 1));
+    const x   = toX(idx);
+    const ts  = dcHistory[idx].created_at;
+    const d   = new Date(ts * 1000);
+    const lbl = d.toLocaleDateString("en-US", {month:"short", day:"numeric"});
+    ctx.fillText(lbl, x, H - PAD_B + 18);
+  }
+
+  if (dcChartMode === "line") {
+    // ── Area fill ──
+    const isUp   = prices[prices.length-1] >= prices[0];
+    const colUp   = "rgba(34,197,94,";
+    const colDown = "rgba(239,68,68,";
+    const col     = isUp ? colUp : colDown;
+
+    const grad = ctx.createLinearGradient(0, PAD_T, 0, PAD_T + cH);
+    grad.addColorStop(0, col + ".25)");
+    grad.addColorStop(1, col + ".02)");
+
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(prices[0]));
+    for (let i = 1; i < prices.length; i++) {
+      const x0 = toX(i-1), y0 = toY(prices[i-1]);
+      const x1 = toX(i),   y1 = toY(prices[i]);
+      const cx  = (x0 + x1) / 2;
+      ctx.bezierCurveTo(cx, y0, cx, y1, x1, y1);
+    }
+    ctx.lineTo(toX(prices.length-1), PAD_T + cH);
+    ctx.lineTo(toX(0), PAD_T + cH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // ── Line ──
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(prices[0]));
+    for (let i = 1; i < prices.length; i++) {
+      const x0 = toX(i-1), y0 = toY(prices[i-1]);
+      const x1 = toX(i),   y1 = toY(prices[i]);
+      const cx  = (x0 + x1) / 2;
+      ctx.bezierCurveTo(cx, y0, cx, y1, x1, y1);
+    }
+    ctx.strokeStyle = isUp ? "#22c55e" : "#ef4444";
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+    // ── Current price dot ──
+    const lastX = toX(prices.length-1);
+    const lastY = toY(prices[prices.length-1]);
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 4, 0, Math.PI*2);
+    ctx.fillStyle = isUp ? "#22c55e" : "#ef4444";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 7, 0, Math.PI*2);
+    ctx.strokeStyle = isUp ? "rgba(34,197,94,.4)" : "rgba(239,68,68,.4)";
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+  } else {
+    // ── Candle chart ──
+    // Group prices into candles (every N points = 1 candle)
+    const candleCount = Math.min(40, prices.length);
+    const step        = prices.length / candleCount;
+    const candles     = [];
+    for (let i = 0; i < candleCount; i++) {
+      const start = Math.floor(i * step);
+      const end   = Math.min(Math.floor((i+1) * step), prices.length);
+      const slice = prices.slice(start, end);
+      candles.push({
+        open:  slice[0],
+        close: slice[slice.length-1],
+        high:  Math.max(...slice),
+        low:   Math.min(...slice),
+        i,
+      });
+    }
+
+    const candleW  = cW / candleCount;
+    const bodyW    = Math.max(2, candleW * 0.6);
+
+    candles.forEach((c, idx) => {
+      const x      = PAD_L + (idx / candleCount) * cW + candleW / 2;
+      const isGreen = c.close >= c.open;
+      const col    = isGreen ? "#22c55e" : "#ef4444";
+
+      // Wick
+      ctx.strokeStyle = col;
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, toY(c.high));
+      ctx.lineTo(x, toY(c.low));
+      ctx.stroke();
+
+      // Body
+      const bodyTop = toY(Math.max(c.open, c.close));
+      const bodyBot = toY(Math.min(c.open, c.close));
+      const bodyH   = Math.max(1, bodyBot - bodyTop);
+      ctx.fillStyle   = col;
+      ctx.fillRect(x - bodyW/2, bodyTop, bodyW, bodyH);
+    });
+  }
+
+  // ── Mouse hover ──
+  canvas.onmousemove = (e) => {
+    const r   = canvas.getBoundingClientRect();
+    const mx  = e.clientX - r.left;
+    const my  = e.clientY - r.top;
+    const tip = document.getElementById("dcTooltip");
+
+    if (mx < PAD_L || mx > W - PAD_R || my < PAD_T || my > H - PAD_B) {
+      tip.classList.remove("show"); return;
+    }
+    const idx  = Math.round(((mx - PAD_L) / cW) * (prices.length - 1));
+    const cIdx = Math.max(0, Math.min(prices.length-1, idx));
+    const p    = prices[cIdx];
+    const ts   = dcHistory[cIdx].created_at;
+    const d    = new Date(ts * 1000);
+    const dt   = d.toLocaleDateString("en-US", {month:"short",day:"numeric"}) +
+                 " " + d.toLocaleTimeString("en-US", {hour:"2-digit",minute:"2-digit"});
+    tip.textContent = `$${p.toFixed(4)}  ·  ${dt}`;
+    tip.classList.add("show");
+
+    const tx = mx + 12;
+    const ty = my - 36;
+    tip.style.left = Math.min(tx, W - 160) + "px";
+    tip.style.top  = Math.max(4, ty) + "px";
+  };
+  canvas.onmouseleave = () => document.getElementById("dcTooltip").classList.remove("show");
+}
+
+// ── History table ─────────────────────────────────────────────
+function dcRenderHistoryTable() {
+  const tbody = document.getElementById("dcHistoryBody");
+  if (!dcHistory.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:20px">No history yet.</td></tr>`;
+    return;
+  }
+  const rows = [...dcHistory].reverse().slice(0, 30);
+  tbody.innerHTML = rows.map((h, i) => {
+    const prev  = dcHistory[dcHistory.length - 1 - i - 1];
+    const delta = prev ? h.price - prev.price : 0;
+    const pct   = prev && prev.price > 0 ? delta / prev.price * 100 : 0;
+    const cls   = delta > 0 ? "up" : delta < 0 ? "down" : "";
+    const sign  = delta > 0 ? "▲" : delta < 0 ? "▼" : "—";
+    const d     = new Date(h.created_at * 1000);
+    const dt    = d.toLocaleDateString("en-US", {month:"short",day:"numeric",year:"numeric"}) +
+                  " " + d.toLocaleTimeString("en-US", {hour:"2-digit",minute:"2-digit"});
+    return `<tr>
+      <td>${dt}</td>
+      <td>$${parseFloat(h.price).toFixed(4)}</td>
+      <td class="${cls}">${sign} ${Math.abs(pct).toFixed(2)}%</td>
+      <td class="note">${h.note || "—"}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ── Trade: Buy ────────────────────────────────────────────────
+function dcSwitchTab(tab) {
+  const isBuy = tab === "buy";
+  document.getElementById("dcTabBuy").classList.toggle("active", isBuy);
+  document.getElementById("dcTabSell").classList.toggle("active", !isBuy);
+  document.getElementById("dcBuyPanel").style.display  = isBuy  ? "block" : "none";
+  document.getElementById("dcSellPanel").style.display = !isBuy ? "block" : "none";
+}
+
+function dcParseAmt(id) {
+  return parseFloat(document.getElementById(id).value) || 0;
+}
+
+function dcUpdateBuyPreview() {
+  const chips    = dcParseAmt("dcBuyAmt");
+  const coinsOut = dcPrice > 0 ? chips / dcPrice : 0;
+  const el       = document.getElementById("dcBuyPreview");
+  if (chips <= 0) {
+    el.innerHTML = "Enter an amount to see how many DayCoins you'll receive.";
+    return;
+  }
+  el.innerHTML = `You spend: <strong>${fmtC(chips)} chips</strong><br>
+    You receive: <strong>${coinsOut.toFixed(4)} DayCoin</strong><br>
+    At price: <strong>$${dcPrice.toFixed(4)}/DC</strong>`;
+}
+
+function dcMaxBuy() {
+  const u = sessionGet();
+  const bal = parseFloat(u?.balance || 0);
+  document.getElementById("dcBuyAmt").value = fmtC(bal);
+  dcUpdateBuyPreview();
+}
+
+async function dcBuy() {
+  const u     = sessionGet();
+  const chips = dcParseAmt("dcBuyAmt");
+  const bal   = parseFloat(u?.balance || 0);
+
+  if (chips <= 0)   { toast("Enter a valid amount.", "info"); return; }
+  if (chips > bal)  { toast("Not enough chips.", "lose"); return; }
+
+  const coinsOut = parseFloat((chips / dcPrice).toFixed(4));
+  const btn      = document.getElementById("dcBuyBtn");
+  btn.disabled   = true; btn.textContent = "Buying…";
+
+  try {
+    // Deduct chips
+    const newBal = parseFloat(Math.max(0, bal - chips).toFixed(4));
+    await sbPatch("users", `?discord_id=eq.${u.discord_id}`, { balance: newBal });
+    sessionSetBalance(newBal); refreshBalance();
+
+    // Update holdings
+    const newOwned = parseFloat((dcOwned + coinsOut).toFixed(4));
+    // Track average buy price
+    dcAvgBuy = dcOwned > 0
+      ? (dcAvgBuy * dcOwned + dcPrice * coinsOut) / newOwned
+      : dcPrice;
+    dcOwned  = newOwned;
+
+    // Upsert holding in DB
+    await dcUpsertHolding(u.discord_id, newOwned);
+
+    dcRenderHoldings();
+    document.getElementById("dcBuyAmt").value = "";
+    dcUpdateBuyPreview();
+    toast(`Bought ${coinsOut.toFixed(4)} DayCoin for $${fmtC(chips)}`, "win");
+  } catch(e) {
+    toast("Buy failed: " + e.message, "lose");
+  }
+  btn.disabled = false; btn.textContent = "Buy DayCoin";
+}
+
+// ── Trade: Sell ───────────────────────────────────────────────
+function dcUpdateSellPreview() {
+  const coins    = dcParseAmt("dcSellAmt");
+  const chipsOut = coins * dcPrice;
+  const el       = document.getElementById("dcSellPreview");
+  if (coins <= 0) {
+    el.innerHTML = "Enter an amount to see how many chips you'll receive.";
+    return;
+  }
+  el.innerHTML = `You sell: <strong>${coins.toFixed(4)} DayCoin</strong><br>
+    You receive: <strong>${fmtC(chipsOut)} chips</strong><br>
+    At price: <strong>$${dcPrice.toFixed(4)}/DC</strong>`;
+}
+
+function dcMaxSell() {
+  document.getElementById("dcSellAmt").value = dcOwned.toFixed(4);
+  dcUpdateSellPreview();
+}
+
+async function dcSell() {
+  const u     = sessionGet();
+  const coins = dcParseAmt("dcSellAmt");
+  const bal   = parseFloat(u?.balance || 0);
+
+  if (coins <= 0)       { toast("Enter a valid amount.", "info"); return; }
+  if (coins > dcOwned)  { toast("Not enough DayCoin.", "lose"); return; }
+
+  const chipsOut = parseFloat((coins * dcPrice).toFixed(4));
+  const btn      = document.getElementById("dcSellBtn");
+  btn.disabled   = true; btn.textContent = "Selling…";
+
+  try {
+    // Credit chips
+    const newBal = parseFloat((bal + chipsOut).toFixed(4));
+    await sbPatch("users", `?discord_id=eq.${u.discord_id}`, { balance: newBal });
+    sessionSetBalance(newBal); refreshBalance();
+
+    // Update holdings
+    const newOwned = parseFloat(Math.max(0, dcOwned - coins).toFixed(4));
+    if (newOwned <= 0) dcAvgBuy = 0;
+    dcOwned = newOwned;
+
+    await dcUpsertHolding(u.discord_id, newOwned);
+
+    dcRenderHoldings();
+    document.getElementById("dcSellAmt").value = "";
+    dcUpdateSellPreview();
+    toast(`Sold ${coins.toFixed(4)} DayCoin for $${fmtC(chipsOut)}`, "win");
+  } catch(e) {
+    toast("Sell failed: " + e.message, "lose");
+  }
+  btn.disabled = false; btn.textContent = "Sell DayCoin";
+}
+
+// ── DB helpers ────────────────────────────────────────────────
+async function dcUpsertHolding(discordId, amount) {
+  // Try patch first, then insert if not exists
+  await sbPatch("daycoin_holdings", `?discord_id=eq.${discordId}`, {
+    amount,
+    updated_at: Math.floor(Date.now()/1000),
+  });
+  // If no row existed, patch is a no-op — check and insert
+  const rows = await sbGet("daycoin_holdings", `?discord_id=eq.${discordId}`);
+  if (!rows.length) {
+    await sbPost("daycoin_holdings", {
+      discord_id: discordId,
+      amount,
+      updated_at: Math.floor(Date.now()/1000),
+    });
+  }
+}
+
+// Resize chart on window resize
+window.addEventListener("resize", dcRenderChart);
+</script>
+</body>
+</html>

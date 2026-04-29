@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StackBet — Deposit</title>
+  <link rel="icon" href="../icons/favicon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/app.css"/>
+  <link rel="stylesheet" href="../css/deposit.css"/>
+  <link rel="stylesheet" href="../css/admin.css"/>
+  <style>
+    /* ── Withdraw small button ──────────────────────────── */
+    .withdraw-btn {
+      height: 32px; padding: 0 14px;
+      background: none;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      color: #6b7280; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: border-color .14s, color .14s;
+      white-space: nowrap;
+    }
+    .withdraw-btn:hover { border-color: #9ca3af; color: #d1d5db; }
+
+    /* ── Shared modal base ──────────────────────────────── */
+    .dep-modal-bg {
+      position:fixed; inset:0; z-index:8000;
+      background:rgba(0,0,0,.72); backdrop-filter:blur(4px);
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity .22s;
+    }
+    .dep-modal-bg.open { opacity:1; pointer-events:all; }
+    .dep-modal {
+      width:480px; max-width:95vw;
+      background:var(--bg2); border:1px solid var(--bdr); border-radius:16px;
+      padding:28px 30px;
+      transform:scale(.94) translateY(8px);
+      transition:transform .22s cubic-bezier(.34,1.46,.64,1);
+      box-shadow:0 32px 80px rgba(0,0,0,.6);
+    }
+    .dep-modal-bg.open .dep-modal { transform:scale(1) translateY(0); }
+    .dep-modal-title { font-size:18px; font-weight:800; margin-bottom:4px; }
+    .dep-modal-sub   { font-size:13px; color:var(--muted); margin-bottom:20px; line-height:1.6; }
+
+    /* ── Status pill ────────────────────────────────────── */
+    .dep-status-pill {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 14px; border-radius:8px; font-size:13px; font-weight:700;
+      margin-bottom:20px;
+    }
+    .dep-status-pill.ready    { background:rgba(34,197,94,.12); color:var(--green); border:1px solid rgba(34,197,94,.3); }
+    .dep-status-pill.notready { background:rgba(239,68,68,.1);  color:var(--red);   border:1px solid rgba(239,68,68,.28); }
+    .dep-status-pill.loading  { background:var(--bg3); color:var(--muted); border:1px solid var(--bdr); }
+    .dep-status-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .ready .dep-status-dot    { background:var(--green); box-shadow:0 0 6px var(--green); animation:gPulse 2s infinite; }
+    .notready .dep-status-dot { background:var(--red); }
+    .loading .dep-status-dot  { background:var(--muted); animation:gPulse 1.2s infinite; }
+    @keyframes gPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    /* ── Code & command blocks ──────────────────────────── */
+    .dep-code-block, .dep-cmd-block {
+      background:var(--bg3); border:1px solid var(--bdr); border-radius:10px;
+      padding:14px 18px; margin-bottom:14px;
+    }
+    .dep-block-label {
+      font-size:10px; font-weight:700; letter-spacing:2px; color:var(--muted); margin-bottom:8px;
+    }
+    .dep-code-value {
+      font-family:'DM Mono',monospace; font-size:30px; font-weight:700;
+      color:var(--green); letter-spacing:6px;
+    }
+    .dep-cmd-value {
+      font-family:'DM Mono',monospace; font-size:13px; color:var(--text); word-break:break-all;
+    }
+
+    /* ── Waiting hint ───────────────────────────────────── */
+    .dep-waiting { display:none; }
+    .dep-waiting.show { display:block; }
+    .dep-wait-hint {
+      font-size:12px; color:var(--muted); margin-bottom:14px;
+      display:flex; align-items:center; gap:6px;
+    }
+
+    /* ── Verified box ───────────────────────────────────── */
+    .dep-verified-box {
+      display:none; text-align:center; padding:18px;
+      background:rgba(34,197,94,.07); border:1px solid rgba(34,197,94,.28);
+      border-radius:10px; margin-bottom:16px;
+    }
+    .dep-verified-box.show { display:block; }
+    .dep-v-icon  { font-size:38px; margin-bottom:8px; }
+    .dep-v-name  { font-size:17px; font-weight:800; color:var(--green); margin-bottom:6px; }
+    .dep-v-sub   { font-size:13px; color:var(--muted); line-height:1.6; }
+    .dep-v-pay   {
+      display:inline-block; margin-top:12px;
+      background:var(--bg3); border:1px solid var(--bdr);
+      border-radius:8px; padding:10px 16px;
+      font-family:'DM Mono',monospace; font-size:13px; color:var(--text);
+      word-break:break-all;
+    }
+    .dep-v-rate  { margin-top:10px; font-size:12px; color:var(--green); font-weight:700; }
+
+    /* ── Spinner ────────────────────────────────────────── */
+    .dep-spinner {
+      display:inline-block; width:13px; height:13px; border-radius:50%;
+      border:2px solid var(--bdr); border-top-color:var(--green);
+      animation:spin .7s linear infinite; flex-shrink:0;
+    }
+    @keyframes spin { to{ transform:rotate(360deg); } }
+
+    /* ── Modal close button ─────────────────────────────── */
+    .dep-modal-close {
+      width:100%; height:42px; background:none;
+      border:1px solid var(--bdr); border-radius:10px;
+      color:var(--muted); font-size:14px; font-weight:600; transition:.14s; margin-top:6px;
+    }
+    .dep-modal-close:hover { border-color:var(--muted); color:var(--text); }
+
+    /* ── Withdraw modal inputs ──────────────────────────── */
+    .wd-field { margin-bottom:14px; }
+    .wd-label { display:block; font-size:11px; font-weight:700; letter-spacing:1.5px; color:var(--muted); margin-bottom:6px; }
+    .wd-input {
+      width:100%; height:44px;
+      background:var(--bg3); border:1px solid var(--bdr); border-radius:8px;
+      color:var(--text); font-size:15px; font-weight:600; padding:0 14px; outline:none; transition:.18s;
+    }
+    .wd-input:focus { border-color:var(--green); }
+    .wd-preview {
+      background:var(--bg3); border:1px solid var(--bdr); border-radius:8px;
+      padding:12px 16px; margin-bottom:16px; font-size:13px; color:var(--muted);
+      line-height:1.7;
+    }
+    .wd-preview strong { color:var(--text); }
+    .wd-preview .wd-chips { color:var(--red); font-weight:800; font-size:15px; }
+    .wd-btn {
+      width:100%; height:46px;
+      background:var(--red); border:none; border-radius:10px;
+      color:#fff; font-size:15px; font-weight:800; transition:.14s;
+    }
+    .wd-btn:hover:not(:disabled) { background:#dc2626; }
+    .wd-btn:disabled { opacity:.45; cursor:not-allowed; }
+    .wd-err { color:var(--red); font-size:13px; margin-bottom:10px; display:none; }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+    <span class="sb-logo-name">StackBet</span>
+  </div>
+      <div class="nav">
+    <a href="dashboard.html" class="nav-link" data-label="Dashboard"><img src="../icons/nav-lobby.png" alt=""/><span>Dashboard</span></a>
+    <a href="slots.html" class="nav-link" data-label="Slots"><img src="../icons/nav-slots.png" alt=""/><span>Slots</span></a>
+    <a href="roulette.html" class="nav-link" data-label="Roulette"><img src="../icons/nav-roulette.png" alt=""/><span>Roulette</span></a>
+    <a href="dice.html" class="nav-link" data-label="Dice"><img src="../icons/nav-dice.png" alt=""/><span>Dice</span></a>
+    <a href="mines.html" class="nav-link" data-label="Mines"><img src="../icons/nav-mines.png" alt=""/><span>Mines</span></a>
+    <a href="crash.html" class="nav-link" data-label="Crash"><img src="../icons/nav-crash.png" alt=""/><span>Crash</span></a>
+    <a href="daycoin.html" class="nav-link" data-label="DayCoin"><img src="../icons/chip.png" alt=""/><span>DayCoin</span></a>
+    <a href="deposit.html" class="nav-link active" data-label="Deposit"><img src="../icons/deposit.png" alt=""/><span>Deposit</span></a>
+    <a href="redeem.html" class="nav-link" data-label="Codes"><img src="../icons/gdice.png" alt=""/><span>Codes</span></a>
+  </div>
+
+  <div class="sb-user">
+    <div class="js-avatar"></div>
+    <span class="sb-uname js-username">—</span>
+  </div>
+</nav>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+  <div class="js-gdice-wrap bal-gdice" style="display:none"><img src="../icons/gdice.png" alt="GD"/><span class="js-gdice">0</span></div>
+  <div class="bal-chip"><img src="../icons/chip.png" alt="chips"/>$<span class="js-balance">0.00</span></div>
+  <a href="deposit.html" class="btn-deposit"><img src="../icons/deposit.png" alt="deposit"/>Deposit</a>
+  <button class="btn-logout" onclick="logout()" title="Log out"><img src="../icons/logout.png" alt="logout"/></button>
+</div>
+<div class="content">
+  <div class="page-inner">
+
+    <div class="dep-hdr">
+      <h1>Deposit &amp; Withdraw Chips</h1>
+      <p>Link your Minecraft account and send money to add chips automatically. No admin needed — chips are credited instantly when your payment is received.</p>
+    </div>
+
+    <div class="dep-grid">
+
+      <!-- ── FluxSMP ── -->
+      <div class="dep-card">
+        <div class="dep-card-left">
+          <div class="dep-card-icon">⛏️</div>
+          <div class="dep-card-title">FluxSMP Money</div>
+          <div class="dep-card-desc">
+            Send money from FluxSMP and chips are added to your balance automatically.<br>
+            Every <strong style="color:var(--text)">$125</strong> you send = <strong style="color:var(--text)">1 chip</strong>.
+          </div>
+          <div class="dep-rate">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+            <span>Rate:</span> $125 FluxSMP → 1 chip
+          </div>
+        </div>
+        <div class="dep-card-right">
+          <button class="withdraw-btn" onclick="openWithdraw('FluxSMP', 125)">Withdraw</button>
+          <button class="dep-btn"      onclick="openDeposit('FluxSMP', 125)">Deposit</button>
+          <div class="dep-stock">80M IN STOCK</div>
+        </div>
+      </div>
+
+      <!-- ── DonutSMP ── -->
+      <div class="dep-card">
+        <div class="dep-card-left">
+          <div class="dep-card-icon">🍩</div>
+          <div class="dep-card-title">DonutSMP Money</div>
+          <div class="dep-card-desc">
+            Deposit and withdraw DonutSMP money by contacting an admin in our Discord server.<br>
+            Every <strong style="color:var(--text)">$210</strong> you send = <strong style="color:var(--text)">1 chip</strong>.
+          </div>
+          <div class="dep-rate">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+            <span>Rate:</span> $210 DonutSMP → 1 chip
+          </div>
+        </div>
+        <div class="dep-card-right">
+          <button class="withdraw-btn" onclick="openDonutAdmin()">Withdraw</button>
+          <button class="dep-btn"      onclick="openDonutAdmin()">Deposit</button>
+          <div class="dep-stock">ADMIN ONLY</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dep-info">
+      <div class="dep-info-icon">ℹ️</div>
+      <div class="dep-info-text">
+        <strong>FluxSMP Deposit:</strong> Click Deposit, verify your Minecraft account, then type <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-family:monospace">/pay VRVRxX &lt;amount&gt;</code> in Minecraft. Chips are credited instantly.<br><br>
+        <strong>FluxSMP Withdraw:</strong> Enter your Minecraft username and chip amount. Chips are deducted and the bot sends money in-game.<br><br>
+        <strong>DonutSMP:</strong> Deposits and withdrawals require an admin. Join our <a href="https://discord.gg/PFxFmAbX2e" target="_blank" style="color:var(--green)">Discord server</a> and open a ticket to get started.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     DEPOSIT MODAL
+════════════════════════════════════════════════════════ -->
+<div class="dep-modal-bg" id="depModalBg">
+  <div class="dep-modal">
+    <div class="dep-modal-title" id="depModalTitle">Deposit</div>
+    <div class="dep-modal-sub"   id="depModalSub">Verify your Minecraft account to begin.</div>
+
+    <!-- Status pill -->
+    <div class="dep-status-pill loading" id="depStatusPill">
+      <div class="dep-status-dot"></div>
+      <span id="depStatusText">Connecting…</span>
+    </div>
+
+    <!-- Code + command — shown once bot is ready -->
+    <div class="dep-waiting" id="depWaiting">
+      <div class="dep-code-block">
+        <div class="dep-block-label">STEP 1 — VERIFICATION CODE</div>
+        <div class="dep-code-value" id="depCode">——</div>
+      </div>
+      <div class="dep-cmd-block">
+        <div class="dep-block-label">TYPE THIS IN MINECRAFT CHAT</div>
+        <div class="dep-cmd-value" id="depCmd">/msg VRVRxX ——</div>
+      </div>
+      <div class="dep-wait-hint">
+        <div class="dep-spinner"></div>
+        Waiting for verification…
+      </div>
+    </div>
+
+    <!-- Verified box -->
+    <div class="dep-verified-box" id="depVerifiedBox">
+      <div class="dep-v-icon">✅</div>
+      <div class="dep-v-name" id="depVerifiedName">Verified!</div>
+      <div class="dep-v-sub">Your Minecraft account is linked. Now send money to the bot:</div>
+      <div class="dep-v-pay" id="depPayCmd">/pay VRVRxX &lt;amount&gt;</div>
+      <div class="dep-v-rate" id="depRateInfo"></div>
+    </div>
+
+    <button class="dep-modal-close" onclick="closeDeposit()">Close</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     WITHDRAW MODAL
+════════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════
+     DONUTSMP ADMIN MODAL
+════════════════════════════════════════════════════════ -->
+<div class="dep-modal-bg" id="donutModalBg">
+  <div class="dep-modal" style="text-align:center">
+    <div style="font-size:40px;margin-bottom:12px">🍩</div>
+    <div class="dep-modal-title">DonutSMP — Contact Admin</div>
+    <div class="dep-modal-sub" style="margin-top:8px">
+      DonutSMP deposits and withdrawals are handled manually by our admins.<br><br>
+      Join our Discord server and open a ticket — an admin will process your request as soon as possible.
+    </div>
+    <a href="https://discord.gg/PFxFmAbX2e" target="_blank"
+       style="display:block;width:100%;height:48px;background:#5865F2;border:none;border-radius:10px;
+              color:#fff;font-size:15px;font-weight:800;line-height:48px;text-decoration:none;
+              margin-bottom:10px;transition:background .14s"
+       onmouseover="this.style.background='#4752c4'"
+       onmouseout="this.style.background='#5865F2'">
+      Open Discord Server
+    </a>
+    <button class="dep-modal-close" onclick="closeDonutAdmin()">Close</button>
+  </div>
+</div>
+
+<div class="dep-modal-bg" id="wdModalBg">
+  <div class="dep-modal">
+    <div class="dep-modal-title" id="wdTitle">Withdraw</div>
+    <div class="dep-modal-sub"   id="wdSub">Enter your Minecraft username and the amount to withdraw.</div>
+
+    <div class="wd-field">
+      <label class="wd-label">YOUR MINECRAFT USERNAME</label>
+      <input class="wd-input" id="wdUsername" type="text" placeholder="e.g. Steve" autocomplete="off"/>
+    </div>
+
+    <div class="wd-field">
+      <label class="wd-label">CHIPS TO WITHDRAW</label>
+      <input class="wd-input" id="wdAmount" type="text" placeholder="e.g. 10, 2.5k, 1m" oninput="updateWdPreview()"/>
+    </div>
+
+    <div class="wd-preview" id="wdPreview">
+      Enter an amount above to see how many chips will be deducted.
+    </div>
+
+    <div class="wd-err" id="wdErr"></div>
+
+    <button class="wd-btn" id="wdConfirmBtn" onclick="confirmWithdraw()">Withdraw</button>
+    <button class="dep-modal-close" onclick="closeWithdraw()">Cancel</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/session.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CHIP HELPERS
+// ═══════════════════════════════════════════════════════════════
+function fmtAbbrev(n) {
+  n = Math.abs(parseFloat(n)||0);
+  if(n>=1e12) return (n/1e12).toFixed(2).replace(/\.?0+$/,'')+'T';
+  if(n>=1e9)  return (n/1e9) .toFixed(2).replace(/\.?0+$/,'')+'B';
+  if(n>=1e6)  return (n/1e6) .toFixed(2).replace(/\.?0+$/,'')+'M';
+  if(n>=1e3)  return (n/1e3) .toFixed(2).replace(/\.?0+$/,'')+'K';
+  return parseFloat(n).toFixed(4);
+}
+function parseChipStr(s) {
+  if(!s) return null;
+  s = String(s).trim().toLowerCase().replace(/,/g,'');
+  const sfx={k:1e3,m:1e6,b:1e9,t:1e12}, last=s.slice(-1);
+  try {
+    const v=sfx[last]?parseFloat(s.slice(0,-1))*sfx[last]:parseFloat(s);
+    return isFinite(v)&&v>0?parseFloat(v.toFixed(4)):null;
+  } catch{return null;}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let _depRowId     = null;   // mc_requests row id for current deposit
+let _depPollTimer = null;
+let _depServer    = null;
+let _depRate      = 125;
+let _depStartTime = 0;      // timestamp when deposit was initiated
+let _depLastStatus = null;  // last known row status — used by beforeunload
+let _wdServer     = null;
+let _wdRate       = 125;
+let _lastBal      = null;   // for detecting balance increases
+let _depVerifiedShown = false;
+let _depCompleteShown = false;
+
+// ═══════════════════════════════════════════════════════════════
+//  PAGE INIT
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener("DOMContentLoaded", async () => {
+  const u = await fillShell();
+  if (!u) return;
+  _lastBal = parseFloat(u.balance);
+  // Poll Supabase every 4 s for balance changes (chip credits)
+  setInterval(_pollBalance, 4000);
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  DEPOSIT FLOW  —  writes to mc_requests, polls that row
+// ═══════════════════════════════════════════════════════════════
+async function openDeposit(serverKey, rate) {
+  const u = sessionGet();
+  if (!u) { toast("Please log in first.", "info"); return; }
+
+  _depServer = serverKey;
+  _depRate   = rate;
+  _depVerifiedShown = false;
+  _depCompleteShown = false;
+
+  // Reset modal UI
+  setDepStatus("loading", "Checking for existing session…");
+  document.getElementById("depWaiting").classList.remove("show");
+  document.getElementById("depVerifiedBox").classList.remove("show");
+  const bannerEl = document.getElementById("depChipsBanner");
+  if (bannerEl) bannerEl.remove();
+  document.getElementById("depCode").textContent = "——";
+  document.getElementById("depCmd").textContent  = "/msg VRVRxX ——";
+  document.getElementById("depModalTitle").textContent = serverKey + " — Deposit";
+  document.getElementById("depModalSub").textContent   =
+    "Verify your Minecraft account, then send money to get chips automatically.";
+  document.getElementById("depModalBg").classList.add("open");
+
+  try {
+    // Look for an active deposit row for this user+server
+    const existing = await sbGet("mc_requests",
+      `?discord_id=eq.${u.discord_id}&server_key=eq.${serverKey}` +
+      `&status=in.(pending,processing,waiting_code,verified)&type=eq.deposit` +
+      `&order=created_at.desc&limit=1`);
+
+    if (existing.length) {
+      const row = existing[0];
+
+      // If bot_ready is true and code exists — session is live, just resume polling
+      if ((row.status === "waiting_code" || row.status === "verified") && row.bot_ready && row.code) {
+        _depRowId     = row.id;
+        _depStartTime = Date.now();
+        setDepStatus("loading", "Resuming session…");
+        _startDepPoll();
+        return;
+      }
+
+      // If waiting_code but bot_ready is false — bot restarted and lost state.
+      // Reset to pending so the bot's poll loop picks it up again with a fresh code.
+      if (row.status === "waiting_code" || row.status === "verified") {
+        try {
+          await sbPatch("mc_requests", `?id=eq.${row.id}`, { status: "pending", bot_ready: false, code: null, command: null });
+        } catch {}
+        // Fall through to create fresh row logic — but actually reuse same row id
+        _depRowId     = row.id;
+        _depStartTime = Date.now();
+        setDepStatus("loading", "Reconnecting bot — please wait…");
+        _startDepPoll();
+        return;
+      }
+
+      // Still pending/processing — reuse it
+      _depRowId     = row.id;
+      _depStartTime = Date.now();
+      setDepStatus("loading", "Waiting for bot…");
+      _startDepPoll();
+      return;
+    }
+  } catch {}
+
+  // No existing row — create a fresh one
+  let row;
+  try {
+    row = await sbPostReturn("mc_requests", {
+      type:       "deposit",
+      discord_id: u.discord_id,
+      server_key: serverKey,
+      status:     "pending",
+    });
+  } catch (e) {
+    setDepStatus("notready", "Could not create deposit request: " + e.message);
+    return;
+  }
+
+  if (!row || !row.id) {
+    setDepStatus("notready", "Server error: could not get row ID. Try again.");
+    return;
+  }
+
+  _depRowId     = row.id;
+  _depStartTime = Date.now();
+  _startDepPoll();
+}
+
+function _startDepPoll() {
+  if (_depPollTimer) clearInterval(_depPollTimer);
+  _depPollTimer = setInterval(_pollDep, 3000);
+  _pollDep();
+}
+
+async function _pollDep() {
+  if (!_depRowId) { _stopDepPoll(); return; }
+  let row;
+  try {
+    const rows = await sbGet("mc_requests", `?id=eq.${_depRowId}`);
+    if (!rows.length) { _stopDepPoll(); setDepStatus("notready", "Session not found."); return; }
+    row = rows[0];
+  } catch {
+    setDepStatus("loading", "Reconnecting…");
+    return;
+  }
+
+  const status = row.status;
+  _depLastStatus = status; // track for beforeunload
+
+  if (status === "expired" || status === "error") {
+    _stopDepPoll();
+    const msg = status === "error"
+      ? (row.error_msg || "An error occurred.")
+      : "Session expired. Click Deposit to try again.";
+    setDepStatus("notready", msg);
+    return;
+  }
+
+  if (status === "complete") {
+    if (!_depCompleteShown) {
+      _depCompleteShown = true;
+      await _pollBalance();
+      const credited = parseFloat(row.chips_credited || 0);
+      const u = sessionGet();
+      if (credited > 0 && u) _showChipsReceived(credited, parseFloat(u.balance || 0));
+      setDepStatus("ready", "Deposit complete - chips added to your balance.");
+    }
+    _stopDepPoll();
+    return;
+  }
+
+  if (status === "verified") {
+    setDepStatus("ready", "Account verified — now send money in Minecraft!");
+    if (!_depVerifiedShown) {
+      _depVerifiedShown = true;
+      document.getElementById("depWaiting").classList.remove("show");
+    const vBox = document.getElementById("depVerifiedBox");
+    vBox.classList.add("show");
+    document.getElementById("depVerifiedName").textContent = (row.mc_username || "?") + " ✅";
+    document.getElementById("depPayCmd").textContent = "/pay VRVRxX <amount>";
+    document.getElementById("depRateInfo").textContent =
+      "Every $" + _depRate + " you send = 1 chip. Chips are added automatically.";
+    toast("✅ " + row.mc_username + " verified! Now type /pay VRVRxX in Minecraft.", "win");
+    }
+    return;
+  }
+
+  if (status === "waiting_code") {
+    // ALWAYS show the code as soon as the bot writes it — don't block on bot_ready.
+    // The bot listens for the whisper regardless of bot_ready state.
+    if (row.code) {
+      document.getElementById("depCode").textContent = row.code;
+      document.getElementById("depCmd").textContent  = row.command || ("/msg VRVRxX " + row.code);
+      document.getElementById("depWaiting").classList.add("show");
+
+      if (row.bot_ready) {
+        setDepStatus("ready", "Bot online — type the command in Minecraft chat.");
+      } else {
+        // Bot is still connecting — show the code anyway so user is ready
+        setDepStatus("notready", "Bot connecting to " + (_depServer || "server") + " — copy the code below and type it when online.");
+      }
+    } else {
+      // Code not yet written by bot (processing state not updated yet)
+      setDepStatus("loading", "Generating verification code…");
+    }
+    return;
+  }
+
+  // pending or processing — bot hasn't picked it up yet
+  const elapsed = _depRowId ? Math.floor((Date.now() - _depStartTime) / 1000) : 0;
+  if (elapsed > 20) {
+    setDepStatus("notready", "Bot is taking longer than usual. Make sure bot.py is running.");
+  } else {
+    setDepStatus("loading", "Waiting for bot to pick up request… (" + elapsed + "s)");
+  }
+}
+
+function _stopDepPoll() {
+  if (_depPollTimer) { clearInterval(_depPollTimer); _depPollTimer = null; }
+}
+
+async function closeDeposit() {
+  _stopDepPoll();
+  document.getElementById("depModalBg").classList.remove("open");
+  // Only expire rows that haven't received a code yet.
+  // If the bot already generated a code (waiting_code/verified), keep the row alive
+  // so the user can reopen the modal and resume without the bot needing to reconnect.
+  if (_depRowId) {
+    try {
+      const rows = await sbGet("mc_requests", `?id=eq.${_depRowId}`);
+      if (rows.length) {
+        const st = rows[0].status;
+        if (st === "pending" || st === "processing") {
+          await sbPatch("mc_requests", `?id=eq.${_depRowId}`, { status: "expired" });
+        }
+        // waiting_code / verified rows stay alive — bot is already tracking them
+      }
+    } catch {}
+    _depRowId = null;
+  }
+}
+
+// Cancel on page leave (sendBeacon can't use JS fetch, but we can
+// use a tiny sync XHR via the Supabase REST URL directly)
+// On page leave: only expire rows the bot hasn't given a code for yet
+window.addEventListener("beforeunload", () => {
+  if (!_depRowId) return;
+  // We can't async-check status here, but we can use a stored flag
+  // _depLastStatus is updated by _pollDep each cycle
+  if (_depLastStatus === "pending" || _depLastStatus === "processing") {
+    const url  = `${SUPABASE_URL}/rest/v1/mc_requests?id=eq.${_depRowId}`;
+    const body = JSON.stringify({ status: "expired" });
+    try {
+      fetch(url, {
+        method: "PATCH", keepalive: true,
+        headers: {
+          "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY,
+          "Content-Type": "application/json", "Prefer": "return=minimal",
+        },
+        body,
+      });
+    } catch {}
+  }
+});
+
+function setDepStatus(type, text) {
+  const pill = document.getElementById("depStatusPill");
+  pill.className = "dep-status-pill " + type;
+  document.getElementById("depStatusText").textContent = text;
+}
+
+// ── DonutSMP admin contact modal ─────────────────────────────
+function openDonutAdmin() {
+  document.getElementById("donutModalBg").classList.add("open");
+}
+function closeDonutAdmin() {
+  document.getElementById("donutModalBg").classList.remove("open");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WITHDRAW FLOW  —  writes to mc_requests, polls for complete/error
+// ═══════════════════════════════════════════════════════════════
+function openWithdraw(serverKey, rate) {
+  const u = sessionGet();
+  if (!u) { toast("Please log in first.", "info"); return; }
+
+  _wdServer = serverKey;
+  _wdRate   = rate;
+
+  document.getElementById("wdTitle").textContent = serverKey + " — Withdraw";
+  document.getElementById("wdSub").textContent   =
+    "Enter your Minecraft username and how many chips to withdraw. " +
+    "You will receive $" + rate + " " + serverKey + " per chip.";
+  document.getElementById("wdUsername").value = "";
+  document.getElementById("wdAmount").value   = "";
+  document.getElementById("wdErr").style.display = "none";
+  document.getElementById("wdPreview").innerHTML =
+    "Enter an amount above to see the MC money you'll receive.";
+  document.getElementById("wdConfirmBtn").disabled = false;
+  document.getElementById("wdConfirmBtn").textContent = "Withdraw";
+  document.getElementById("wdModalBg").classList.add("open");
+}
+
+function updateWdPreview() {
+  const raw  = document.getElementById("wdAmount").value;
+  const chips = parseChipStr(raw);
+  const u    = sessionGet();
+  const bal  = u ? parseFloat(u.balance) : 0;
+  const prev = document.getElementById("wdPreview");
+  if (!chips || chips <= 0) {
+    prev.innerHTML = "Enter chip amount above to see the MC money you'll receive.";
+    return;
+  }
+  const mcAmt     = Math.floor(chips * _wdRate);
+  const canAfford = bal >= chips;
+  prev.innerHTML =
+    "Chips to spend: <span class='wd-chips'>" + fmtAbbrev(chips) + " chips</span><br>" +
+    "You will receive: <strong>$" + mcAmt.toLocaleString() + " " + _wdServer + "</strong><br>" +
+    "Your balance: <strong>" + fmtAbbrev(bal) + " chips</strong>" +
+    (canAfford ? "" : " <span style='color:var(--red)'>(not enough!)</span>");
+}
+
+async function confirmWithdraw() {
+  const u          = sessionGet();
+  const mc_username = document.getElementById("wdUsername").value.trim();
+  const chips      = parseChipStr(document.getElementById("wdAmount").value);
+  const btn        = document.getElementById("wdConfirmBtn");
+
+  document.getElementById("wdErr").style.display = "none";
+
+  if (!mc_username)          { showWdErr("Enter your Minecraft username."); return; }
+  if (!chips || chips <= 0)  { showWdErr("Enter a valid chip amount."); return; }
+  if (parseFloat(u.balance) < chips) {
+    showWdErr("Not enough chips. You have " + fmtAbbrev(u.balance) + "."); return;
+  }
+
+  btn.textContent = "Submitting…"; btn.disabled = true;
+
+  // Write withdraw request to Supabase — bot will pick it up within 8 s
+  let row;
+  try {
+    row = await sbPostReturn("mc_requests", {
+      type:         "withdraw",
+      discord_id:   u.discord_id,
+      server_key:   _wdServer,
+      mc_username:  mc_username,
+      chips_amount: chips,
+      status:       "pending",
+    });
+  } catch (e) {
+    showWdErr("Could not submit request: " + e.message);
+    btn.textContent = "Withdraw"; btn.disabled = false;
+    return;
+  }
+
+  if (!row || !row.id) {
+    showWdErr("Server error: could not get row ID. Try again.");
+    btn.textContent = "Withdraw"; btn.disabled = false;
+    return;
+  }
+
+  btn.textContent = "Processing…";
+
+  // Poll for up to 30 s (bot should act within 8 s)
+  const rowId    = row.id;
+  const deadline = Date.now() + 30000;
+
+  const poll = setInterval(async () => {
+    if (Date.now() > deadline) {
+      clearInterval(poll);
+      // Mark expired so bot ignores it
+      try { await sbPatch("mc_requests", `?id=eq.${rowId}`, { status: "expired" }); } catch {}
+      showWdErr("MC account is offline. Your chips were not deducted. Try again later.");
+      btn.textContent = "Withdraw"; btn.disabled = false;
+      return;
+    }
+    try {
+      const rows = await sbGet("mc_requests", `?id=eq.${rowId}`);
+      if (!rows.length) return;
+      const r = rows[0];
+
+      if (r.status === "complete") {
+        clearInterval(poll);
+        // Refresh balance from Supabase
+        const users = await sbGet("users", `?discord_id=eq.${u.discord_id}`);
+        if (users.length) { sessionSetBalance(users[0].balance); refreshBalance(); }
+        closeWithdraw();
+        const mcAmt = Math.floor(chips * _wdRate);
+        toast("💸 Sent $" + mcAmt.toLocaleString() + " " + _wdServer +
+              " to " + mc_username + " (−" + fmtAbbrev(chips) + " chips)", "info");
+      } else if (r.status === "error") {
+        clearInterval(poll);
+        showWdErr(r.error_msg || "An error occurred. Your chips were not deducted.");
+        btn.textContent = "Withdraw"; btn.disabled = false;
+      }
+    } catch {}
+  }, 2000);
+}
+
+function showWdErr(msg) {
+  const el = document.getElementById("wdErr");
+  el.textContent = msg; el.style.display = "block";
+}
+function closeWithdraw() {
+  document.getElementById("wdModalBg").classList.remove("open");
+  document.getElementById("wdConfirmBtn").textContent = "Withdraw";
+  document.getElementById("wdConfirmBtn").disabled    = false;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BALANCE AUTO-REFRESH
+//  Polls Supabase every 4 s. Detects chip credits and shows banner.
+// ═══════════════════════════════════════════════════════════════
+async function _pollBalance() {
+  const u = sessionGet(); if (!u) return;
+  try {
+    const rows = await sbGet("users", "?discord_id=eq." + u.discord_id);
+    if (!rows.length) return;
+    const newBal = parseFloat(rows[0].balance);
+    const prev   = _lastBal !== null ? _lastBal : parseFloat(u.balance);
+    if (newBal > prev + 0.0001) _showChipsReceived(newBal - prev, newBal);
+    _lastBal = newBal;
+    if (Math.abs(newBal - parseFloat(u.balance)) > 0.0001) {
+      sessionSetBalance(newBal); refreshBalance();
+    }
+  } catch {}
+}
+
+function _showChipsReceived(gained, newBal) {
+  toast("💰 +" + fmtAbbrev(gained) + " chips received!", "win");
+  // Persistent banner — stays until user closes modal
+  let b = document.getElementById("depChipsBanner");
+  if (!b) {
+    b = document.createElement("div");
+    b.id = "depChipsBanner";
+    b.style.cssText =
+      "background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);" +
+      "border-radius:10px;padding:14px 16px;text-align:center;margin-bottom:14px;";
+    const close = document.querySelector("#depModalBg .dep-modal-close");
+    if (close) close.parentNode.insertBefore(b, close);
+  }
+  b.innerHTML =
+    '<div style="font-size:26px;margin-bottom:6px">💰</div>' +
+    '<div style="font-size:16px;font-weight:800;color:var(--green);margin-bottom:4px">+' +
+    fmtAbbrev(gained) + ' chips received!</div>' +
+    '<div style="font-size:12px;color:var(--muted)">New balance: ' + fmtAbbrev(newBal) + ' chips</div>';
+}
+</script>
+</body>
+</html>

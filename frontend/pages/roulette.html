@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StackBet — Roulette</title>
+  <link rel="icon" href="../icons/favicon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/app.css"/>
+  <link rel="stylesheet" href="../css/admin.css"/>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   ROULETTE — all styles self-contained
+═══════════════════════════════════════════════════════════════ */
+
+.rl-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── Top section: wheel + bet controls ── */
+.rl-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  .rl-top { grid-template-columns: 1fr; }
+}
+
+/* ── Wheel card ── */
+.rl-wheel-card {
+  background: var(--bg2);
+  border: 1px solid var(--bdr);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── SVG wheel container ── */
+.rl-wheel-wrap {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  flex-shrink: 0;
+}
+.rl-wheel-svg {
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  transition: none;
+}
+.rl-wheel-svg.spinning {
+  /* JS drives the animation via requestAnimationFrame */
+}
+/* Pointer / needle at top */
+.rl-pointer {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 20px solid var(--text);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
+  z-index: 10;
+}
+
+/* Result bubble in wheel center */
+.rl-center-num {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 3px solid var(--bdr);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800;
+  font-family: 'DM Mono', monospace;
+  transition: border-color .3s, color .3s;
+  z-index: 5;
+}
+.rl-center-num.red  { border-color: var(--red);   color: var(--red); }
+.rl-center-num.blk  { border-color: #94a3b8; color: #94a3b8; }
+.rl-center-num.grn  { border-color: var(--green); color: var(--green); }
+
+/* ── Last numbers strip ── */
+.rl-history {
+  display: flex;
+  gap: 5px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+}
+.rl-hist-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800;
+  flex-shrink: 0;
+  transition: opacity .4s;
+}
+.rl-hist-num.red { background: var(--red); color: #fff; }
+.rl-hist-num.blk { background: #374151; color: #fff; }
+.rl-hist-num.grn { background: var(--green); color: #000; }
+
+/* ── Bet controls card ── */
+.rl-controls-card {
+  background: var(--bg2);
+  border: 1px solid var(--bdr);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Chip size selector */
+.rl-chips-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rl-chip-btn {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  font-size: 11px; font-weight: 800;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s, border-color .12s;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+.rl-chip-btn:hover   { transform: scale(1.1); }
+.rl-chip-btn.active  { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,.4); transform: scale(1.15); }
+
+/* Chip colours matching casino tradition */
+.rl-chip-btn[data-val="1"]     { background: #475569; color: #fff; }
+.rl-chip-btn[data-val="5"]     { background: #dc2626; color: #fff; }
+.rl-chip-btn[data-val="10"]    { background: #2563eb; color: #fff; }
+.rl-chip-btn[data-val="25"]    { background: #16a34a; color: #fff; }
+.rl-chip-btn[data-val="100"]   { background: #7c3aed; color: #fff; }
+.rl-chip-btn[data-val="500"]   { background: #b45309; color: #fff; }
+.rl-chip-btn[data-val="1000"]  { background: #0f172a; color: #f59e0b; border: 3px solid #f59e0b; }
+
+/* Total bet / balance row */
+.rl-bet-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg3);
+  border: 1px solid var(--bdr);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.rl-bet-summary .lbl  { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 2px; }
+.rl-bet-summary .val  { font-size: 18px; font-weight: 800; color: var(--text); }
+.rl-bet-summary .val.hot { color: var(--green); }
+
+/* Action buttons */
+.rl-actions { display: flex; gap: 8px; }
+.rl-btn-clear {
+  flex: 1; height: 48px;
+  background: none; border: 1px solid var(--bdr);
+  border-radius: 10px; color: var(--muted);
+  font-size: 13px; font-weight: 700;
+  transition: .14s;
+}
+.rl-btn-clear:hover { border-color: var(--red); color: var(--red); }
+
+.rl-btn-spin {
+  flex: 2; height: 48px;
+  background: var(--green); border: none;
+  border-radius: 10px; color: #000;
+  font-size: 15px; font-weight: 800; letter-spacing: 1px;
+  transition: background .14s, box-shadow .14s, transform .1s;
+}
+.rl-btn-spin:hover:not(:disabled) { background: var(--green2); box-shadow: 0 0 24px var(--gglow); }
+.rl-btn-spin:active:not(:disabled) { transform: scale(.97); }
+.rl-btn-spin:disabled { background: var(--bdr); color: var(--muted); cursor: not-allowed; }
+
+/* Active bets list */
+.rl-active-bets {
+  max-height: 130px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rl-bet-tag {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg3);
+  border: 1px solid var(--bdr);
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-size: 12px;
+  animation: fadeSlide .18s ease-out;
+}
+.rl-bet-tag-name { font-weight: 700; color: var(--text); }
+.rl-bet-tag-val  { color: var(--green); font-weight: 700; font-family: 'DM Mono', monospace; }
+.rl-bet-tag-del  {
+  background: none; border: none; color: var(--muted);
+  font-size: 14px; padding: 0 4px; transition: color .12s;
+}
+.rl-bet-tag-del:hover { color: var(--red); }
+@keyframes fadeSlide { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+
+/* ── Betting board ── */
+.rl-board-card {
+  background: var(--bg2);
+  border: 1px solid var(--bdr);
+  border-radius: 16px;
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.rl-board {
+  min-width: 560px;
+  user-select: none;
+}
+
+/* Number grid */
+.rl-numbers-grid {
+  display: grid;
+  grid-template-columns: 40px repeat(12, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.rl-num-cell {
+  height: 52px;
+  border-radius: 7px;
+  border: 1px solid var(--bdr);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800;
+  cursor: pointer;
+  position: relative;
+  transition: transform .1s, box-shadow .1s, filter .1s;
+  font-family: 'DM Mono', monospace;
+}
+.rl-num-cell:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.4); filter: brightness(1.2); }
+.rl-num-cell.red-cell { background: rgba(220,38,38,.55); color: #fff; }
+.rl-num-cell.blk-cell { background: rgba(55,65,81,.7);   color: #fff; }
+.rl-num-cell.grn-cell { background: rgba(22,163,74,.7);  color: #fff; }
+
+/* Column bet cells (right side 2:1) */
+.rl-col-bet {
+  height: 52px;
+  border-radius: 7px;
+  border: 1px solid var(--bdr);
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  cursor: pointer;
+  transition: .14s;
+}
+.rl-col-bet:hover { border-color: var(--green); color: var(--green); background: rgba(34,197,94,.07); }
+
+/* Outside bets row */
+.rl-outside-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 4px;
+  margin-top: 4px;
+}
+.rl-zero-cell {
+  grid-row: 1 / 4;
+  grid-column: 1;
+  border-radius: 7px;
+  background: rgba(22,163,74,.7);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+  cursor: pointer;
+  transition: .12s;
+  font-family: 'DM Mono', monospace;
+}
+.rl-zero-cell:hover { filter: brightness(1.25); }
+
+.rl-out-cell {
+  height: 44px;
+  border-radius: 7px;
+  border: 1px solid var(--bdr);
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  cursor: pointer;
+  transition: .14s;
+  flex-direction: column;
+  gap: 1px;
+}
+.rl-out-cell:hover { border-color: var(--green); color: var(--green); background: rgba(34,197,94,.07); }
+.rl-out-cell .payout { font-size: 9px; font-weight: 600; opacity: .6; }
+
+.rl-out-cell.red-out  { background: rgba(220,38,38,.18); border-color: rgba(220,38,38,.35); color: #f87171; }
+.rl-out-cell.red-out:hover  { background: rgba(220,38,38,.3); }
+.rl-out-cell.blk-out  { background: rgba(55,65,81,.4);   border-color: rgba(100,116,139,.35); color: #94a3b8; }
+.rl-out-cell.blk-out:hover  { background: rgba(55,65,81,.6); }
+
+/* Chip overlay shown on a cell when bet is placed */
+.rl-chip-overlay {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #000;
+  font-size: 9px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid #fff;
+  pointer-events: none;
+  z-index: 3;
+  animation: chipPop .2s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes chipPop { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* ── Result banner ── */
+.rl-result {
+  background: var(--bg2);
+  border: 1px solid var(--bdr);
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: none;
+  align-items: center;
+  gap: 20px;
+  animation: fadeSlide .3s ease-out;
+}
+.rl-result.show { display: flex; }
+.rl-result-num {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 800;
+  font-family: 'DM Mono', monospace;
+  flex-shrink: 0;
+}
+.rl-result-num.red { background: var(--red); color: #fff; }
+.rl-result-num.blk { background: #374151; color: #fff; }
+.rl-result-num.grn { background: var(--green); color: #000; }
+.rl-result-info { flex: 1; }
+.rl-result-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.rl-result-title.win  { color: var(--green); }
+.rl-result-title.lose { color: var(--red); }
+.rl-result-sub { font-size: 13px; color: var(--muted); }
+.rl-result-delta { font-size: 22px; font-weight: 800; font-family: 'DM Mono', monospace; flex-shrink: 0; }
+.rl-result-delta.win  { color: var(--green); }
+.rl-result-delta.lose { color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+    <span class="sb-logo-name">StackBet</span>
+  </div>
+  <div class="nav">
+    <a href="dashboard.html" class="nav-link"        data-label="Dashboard"><img src="../icons/nav-lobby.png"    alt=""/><span>Dashboard</span></a>
+    <a href="slots.html"     class="nav-link"        data-label="Slots"    ><img src="../icons/nav-slots.png"    alt=""/><span>Slots</span></a>
+    <a href="roulette.html"  class="nav-link active" data-label="Roulette" ><img src="../icons/nav-roulette.png" alt=""/><span>Roulette</span></a>
+    <a href="dice.html"      class="nav-link"        data-label="Dice"     ><img src="../icons/nav-dice.png"     alt=""/><span>Dice</span></a>
+    <a href="mines.html"     class="nav-link"        data-label="Mines"    ><img src="../icons/nav-mines.png"    alt=""/><span>Mines</span></a>
+    <a href="crash.html"     class="nav-link"        data-label="Crash"    ><img src="../icons/nav-crash.png"    alt=""/><span>Crash</span></a>
+    <a href="daycoin.html"   class="nav-link"        data-label="DayCoin"  ><img src="../icons/chip.png" alt=""/><span>DayCoin</span></a>
+    <a href="deposit.html"   class="nav-link"        data-label="Deposit"  ><img src="../icons/deposit.png"      alt=""/><span>Deposit</span></a>
+    <a href="redeem.html"    class="nav-link"        data-label="Codes"    ><img src="../icons/gdice.png"        alt=""/><span>Codes</span></a>
+  </div>
+  <div class="sb-user"><div class="js-avatar"></div><span class="sb-uname js-username">—</span></div>
+</nav>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+  <div class="js-gdice-wrap bal-gdice" style="display:none"><img src="../icons/gdice.png" alt="GD"/><span class="js-gdice">0</span></div>
+  <div class="bal-chip"><img src="../icons/chip.png" alt="chips"/>$<span class="js-balance">0.00</span></div>
+  <a href="deposit.html" class="btn-deposit"><img src="../icons/deposit.png" alt="deposit"/>Deposit</a>
+  <button class="btn-logout" onclick="logout()" title="Log out"><img src="../icons/logout.png" alt="logout"/></button>
+</div>
+
+<!-- ── CONTENT ── -->
+<div class="content">
+<div class="page-inner">
+<div class="rl-wrap">
+
+  <!-- Top: Wheel + Controls -->
+  <div class="rl-top">
+
+    <!-- Wheel -->
+    <div class="rl-wheel-card">
+      <div class="rl-wheel-wrap" id="rlWheelWrap">
+        <div class="rl-pointer"></div>
+        <svg class="rl-wheel-svg" id="rlWheel" viewBox="0 0 200 200"></svg>
+        <div class="rl-center-num" id="rlCenterNum">—</div>
+      </div>
+      <!-- History strip -->
+      <div class="rl-history" id="rlHistory"></div>
+    </div>
+
+    <!-- Bet controls -->
+    <div class="rl-controls-card">
+
+      <!-- Chip selector label -->
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Chip Size</div>
+        <div class="rl-chips-row" id="rlChipsRow">
+          <button class="rl-chip-btn active" data-val="1"    onclick="selectChip(1)">1</button>
+          <button class="rl-chip-btn"        data-val="5"    onclick="selectChip(5)">5</button>
+          <button class="rl-chip-btn"        data-val="10"   onclick="selectChip(10)">10</button>
+          <button class="rl-chip-btn"        data-val="25"   onclick="selectChip(25)">25</button>
+          <button class="rl-chip-btn"        data-val="100"  onclick="selectChip(100)">100</button>
+          <button class="rl-chip-btn"        data-val="500"  onclick="selectChip(500)">500</button>
+          <button class="rl-chip-btn"        data-val="1000" onclick="selectChip(1000)">1K</button>
+        </div>
+      </div>
+
+      <!-- Bet summary -->
+      <div class="rl-bet-summary">
+        <div>
+          <div class="lbl">Total Bet</div>
+          <div class="val" id="rlTotalBet">$0</div>
+        </div>
+        <div style="text-align:right">
+          <div class="lbl">Balance</div>
+          <div class="val hot" id="rlBalDisplay">$0</div>
+        </div>
+      </div>
+
+      <!-- Active bets list -->
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Active Bets</div>
+        <div class="rl-active-bets" id="rlActiveBets">
+          <div style="color:var(--muted);font-size:12px;padding:6px 0">No bets placed yet.</div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="rl-actions">
+        <button class="rl-btn-clear" onclick="clearBets()">Clear</button>
+        <button class="rl-btn-spin"  id="rlSpinBtn" onclick="doSpin()">SPIN</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Betting Board -->
+  <div class="rl-board-card">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:12px">Betting Board — click any cell to place a chip</div>
+    <div class="rl-board" id="rlBoard"></div>
+  </div>
+
+  <!-- Result banner -->
+  <div class="rl-result" id="rlResult">
+    <div class="rl-result-num" id="rlResultNum">0</div>
+    <div class="rl-result-info">
+      <div class="rl-result-title" id="rlResultTitle">—</div>
+      <div class="rl-result-sub"   id="rlResultSub">—</div>
+    </div>
+    <div class="rl-result-delta" id="rlResultDelta">—</div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/db.js"></script>
+<script src="../js/session.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  ROULETTE — European single-zero wheel
+// ═══════════════════════════════════════════════════════════════
+
+// ── Wheel number sequence (American roulette order) ───────────
+// 0 and 00 are on opposite sides; standard American wheel layout
+const WHEEL_SEQ = [
+  0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1,
+  "00", 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2
+];
+const TOTAL = WHEEL_SEQ.length; // 38
+
+// ── Number colour map ─────────────────────────────────────────
+const RED_NUMS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+function numColour(n) {
+  if (n === 0 || n === "00") return "grn";
+  return RED_NUMS.has(n) ? "red" : "blk";
+}
+
+// ── State ─────────────────────────────────────────────────────
+let selectedChip = 1;
+// bets: { key: { label, amount, payout_mult, check: fn(result) } }
+let bets = {};
+let spinning = false;
+let rlHistory  = []; // last 10 results — named to avoid window.history conflict
+let wheelAngle = 0; // current rotation in degrees
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", async () => {
+  const u = await fillShell();
+  if (!u) return;
+  buildWheel();
+  buildBoard();
+  updateUI();
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  WHEEL — drawn with SVG arcs
+// ═══════════════════════════════════════════════════════════════
+function buildWheel() {
+  const svg  = document.getElementById("rlWheel");
+  const cx = 100, cy = 100, R = 98, r_inner = 32;
+  const sliceAngle = 360 / TOTAL; // degrees per slice
+  let svgHTML = "";
+
+  for (let i = 0; i < TOTAL; i++) {
+    const num   = WHEEL_SEQ[i];
+    const col   = numColour(num);
+    const fill  = col === "red" ? "#dc2626"
+                : col === "grn" ? "#16a34a"
+                : "#374151";
+    const startDeg = i * sliceAngle - 90; // start from top
+    const endDeg   = startDeg + sliceAngle;
+
+    const [x1, y1] = polar(cx, cy, R, startDeg);
+    const [x2, y2] = polar(cx, cy, R, endDeg);
+    const [x3, y3] = polar(cx, cy, r_inner, endDeg);
+    const [x4, y4] = polar(cx, cy, r_inner, startDeg);
+
+    const large = sliceAngle > 180 ? 1 : 0;
+    const path  = `M${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} L${x3},${y3} A${r_inner},${r_inner} 0 ${large},0 ${x4},${y4} Z`;
+
+    // Text angle: midpoint of slice
+    const midDeg = startDeg + sliceAngle / 2;
+    const [tx, ty] = polar(cx, cy, (R + r_inner) / 2, midDeg);
+
+    svgHTML += `<path d="${path}" fill="${fill}" stroke="#0b0f1a" stroke-width="0.8"/>`;
+    svgHTML += `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central"
+      font-size="7" font-weight="bold" fill="#fff" font-family="DM Mono,monospace"
+      transform="rotate(${midDeg + 90},${tx},${ty})">${num}</text>`;
+  }
+
+  // Outer rim
+  svgHTML += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#1e2d45" stroke-width="2"/>`;
+  // Inner hub ring
+  svgHTML += `<circle cx="${cx}" cy="${cy}" r="${r_inner}" fill="#111827" stroke="#1e2d45" stroke-width="2"/>`;
+
+  svg.innerHTML = svgHTML;
+}
+
+function polar(cx, cy, r, deg) {
+  const rad = (deg * Math.PI) / 180;
+  return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BETTING BOARD
+// ═══════════════════════════════════════════════════════════════
+// European layout: 3 rows, 12 columns = numbers 1-36 + zero
+// Board layout column by column: col 1 = 1,2,3 col2 = 4,5,6 ...
+function buildBoard() {
+  const board = document.getElementById("rlBoard");
+
+  // ── Number grid ───────────────────────────────────────────
+  // Grid: rows=3, cols 1..12 for numbers 1-36
+  // Col 0 = 0 and 00 stacked; col 13 = 2:1 column bets
+  const gridDiv = document.createElement("div");
+  gridDiv.className = "rl-numbers-grid";
+
+  // 0 — top green cell
+  const zeroCell = makeCell("0", "grn-cell rl-zero-cell", () => addBet("num_0", "0", 35, n => n===0));
+  zeroCell.style.gridRow    = "1 / 3"; // top 2 rows
+  zeroCell.style.gridColumn = "1";
+  zeroCell.style.height     = "auto";
+  gridDiv.appendChild(zeroCell);
+
+  // 00 — bottom green cell
+  const dzeroCell = makeCell("00", "grn-cell rl-zero-cell", () => addBet("num_00", "00", 35, n => n==="00"));
+  dzeroCell.style.gridRow    = "3"; // bottom row
+  dzeroCell.style.gridColumn = "1";
+  dzeroCell.style.height     = "auto";
+  gridDiv.appendChild(dzeroCell);
+
+  // Numbers 1-36
+  for (let col = 1; col <= 12; col++) {
+    for (let row = 3; row >= 1; row--) {
+      const num  = (col - 1) * 3 + row;
+      const col2 = numColour(num);
+      const cls  = col2 === "red" ? "red-cell" : "blk-cell";
+      const cell = makeCell(String(num), `rl-num-cell ${cls}`, () => {
+        addBet(`num_${num}`, `${num}`, 35, n => n === num);
+      });
+      cell.id = `rl-cell-${num}`;
+      cell.style.gridColumn = col + 1;
+      cell.style.gridRow    = 4 - row;
+      gridDiv.appendChild(cell);
+    }
+  }
+
+  // 2:1 column bet cells
+  for (let row = 3; row >= 1; row--) {
+    const r = row;
+    const cell = document.createElement("div");
+    cell.className = "rl-col-bet";
+    cell.textContent = "2:1";
+    cell.style.gridColumn = "14";
+    cell.style.gridRow    = 4 - row;
+    cell.onclick = () => addBet(`col_${row}`, `Col ${row}`, 2, n => typeof n === "number" && n > 0 && n % 3 === r % 3);
+    gridDiv.appendChild(cell);
+  }
+
+  board.appendChild(gridDiv);
+
+  // ── Outside bets ──────────────────────────────────────────
+  const outsideDiv = document.createElement("div");
+  outsideDiv.className = "rl-outside-row";
+  const sp = document.createElement("div");
+  outsideDiv.appendChild(sp);
+
+  const outside = [
+    { key:"1to18",  label:"1-18",   payout:1, cls:"",        check: n => typeof n==="number" && n>=1 && n<=18 },
+    { key:"even",   label:"Even",   payout:1, cls:"",        check: n => typeof n==="number" && n>0 && n%2===0 },
+    { key:"red",    label:"Red",    payout:1, cls:"red-out", check: n => RED_NUMS.has(n) },
+    { key:"black",  label:"Black",  payout:1, cls:"blk-out", check: n => typeof n==="number" && n>0 && !RED_NUMS.has(n) },
+    { key:"odd",    label:"Odd",    payout:1, cls:"",        check: n => typeof n==="number" && n>0 && n%2===1 },
+    { key:"19to36", label:"19-36",  payout:1, cls:"",        check: n => typeof n==="number" && n>=19 && n<=36 },
+  ];
+
+  outside.forEach(({key, label, payout, cls, check}) => {
+    const cell = document.createElement("div");
+    cell.className = `rl-out-cell ${cls}`;
+    cell.innerHTML = `${label}<span class="payout">1:1</span>`;
+    cell.onclick = () => addBet(key, label, payout, check);
+    outsideDiv.appendChild(cell);
+  });
+
+  // Dozen bets
+  const dozenRow = document.createElement("div");
+  dozenRow.style.cssText = "display:grid;grid-template-columns:40px 1fr 1fr 1fr;gap:4px;margin-top:4px;";
+  const sp2 = document.createElement("div"); dozenRow.appendChild(sp2);
+  [
+    { key:"1st12", label:"1st 12", check: n => typeof n==="number" && n>=1 && n<=12 },
+    { key:"2nd12", label:"2nd 12", check: n => typeof n==="number" && n>=13 && n<=24 },
+    { key:"3rd12", label:"3rd 12", check: n => typeof n==="number" && n>=25 && n<=36 },
+  ].forEach(({key, label, check}) => {
+    const cell = document.createElement("div");
+    cell.className = "rl-out-cell";
+    cell.innerHTML = `${label}<span class="payout">2:1</span>`;
+    cell.onclick   = () => addBet(key, label, 2, check);
+    dozenRow.appendChild(cell);
+  });
+
+  board.appendChild(outsideDiv);
+  board.appendChild(dozenRow);
+}
+
+function makeCell(text, cls, onclick) {
+  const d = document.createElement("div");
+  d.className = cls;
+  d.textContent = text;
+  d.onclick = onclick;
+  return d;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BET MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function selectChip(val) {
+  selectedChip = val;
+  document.querySelectorAll(".rl-chip-btn").forEach(b => {
+    b.classList.toggle("active", parseInt(b.dataset.val) === val);
+  });
+}
+
+function addBet(key, label, payout, check) {
+  if (spinning) return;
+  const u = sessionGet();
+  if (!u) { toast("Not logged in.", "lose"); return; }
+  const total = (parseFloat(u.balance)||0) + (parseFloat(u.gdice)||0);
+  const currentTotal = Object.values(bets).reduce((s, b) => s + b.amount, 0);
+
+  if (currentTotal + selectedChip > total) {
+    toast("Not enough chips!", "lose");
+    return;
+  }
+
+  if (bets[key]) {
+    bets[key].amount += selectedChip;
+  } else {
+    bets[key] = { label, amount: selectedChip, payout, check };
+  }
+
+  renderChipOnCell(key, bets[key].amount);
+  updateBetsList();
+  updateUI();
+  updateBetSummary();
+}
+
+function removeBet(key) {
+  if (spinning) return;
+  delete bets[key];
+  // Remove chip overlay for this cell
+  const el = document.getElementById(`rl-chip-${key}`);
+  if (el) el.remove();
+  updateBetsList();
+  updateUI();
+  updateBetSummary();
+}
+
+function clearBets() {
+  if (spinning) return;
+  bets = {};
+  document.querySelectorAll(".rl-chip-overlay").forEach(e => e.remove());
+  updateBetsList();
+  updateUI();
+  updateBetSummary();
+}
+
+function renderChipOnCell(key, amount) {
+  // Find target cell
+  let target;
+  if (key.startsWith("num_")) {
+    const num = key.slice(4);
+    target = num === "0"
+      ? document.querySelector(".rl-zero-cell")
+      : document.getElementById(`rl-cell-${num}`);
+  }
+  // For outside/dozen bets we just show in the active bets list — skip overlay
+  if (!target) return;
+
+  // Remove old overlay for this key
+  const old = document.getElementById(`rl-chip-${key}`);
+  if (old) old.remove();
+
+  const chip = document.createElement("div");
+  chip.className = "rl-chip-overlay";
+  chip.id = `rl-chip-${key}`;
+  chip.textContent = fmtC(amount);
+  target.style.position = "relative";
+  target.appendChild(chip);
+}
+
+function updateBetsList() {
+  const el = document.getElementById("rlActiveBets");
+  const keys = Object.keys(bets);
+  if (!keys.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:6px 0">No bets placed yet.</div>';
+    return;
+  }
+  el.innerHTML = keys.map(k => `
+    <div class="rl-bet-tag">
+      <span class="rl-bet-tag-name">${bets[k].label}</span>
+      <span class="rl-bet-tag-val">$${fmtC(bets[k].amount)}</span>
+      <button class="rl-bet-tag-del" onclick="removeBet('${k}')" title="Remove">✕</button>
+    </div>
+  `).join("");
+}
+
+function updateBetSummary() {
+  const total = Object.values(bets).reduce((s, b) => s + b.amount, 0);
+  document.getElementById("rlTotalBet").textContent = "$" + fmtC(total);
+}
+
+function updateUI() {
+  const u = sessionGet();
+  if (u) {
+    const total = (parseFloat(u.balance)||0) + (parseFloat(u.gdice)||0);
+    document.getElementById("rlBalDisplay").textContent = "$" + fmtC(total);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SPIN
+// ═══════════════════════════════════════════════════════════════
+function doSpin() {
+  if (spinning) return;
+
+  const betKeys = Object.keys(bets);
+  if (!betKeys.length) { toast("Place a bet first!", "info"); return; }
+
+  const totalBet = Object.values(bets).reduce((s, b) => s + b.amount, 0);
+  const { gdiceSpent, chipsSpent } = splitBet(totalBet);
+
+  spinning = true;
+  document.getElementById("rlSpinBtn").disabled = true;
+  document.getElementById("rlResult").classList.remove("show");
+
+  // Determine result BEFORE animation starts
+  const resultIdx = Math.floor(Math.random() * TOTAL);
+  const result    = WHEEL_SEQ[resultIdx];
+  const colour    = numColour(result);
+
+  // Animate wheel to the winning slice
+  spinWheel(resultIdx, () => {
+    spinning = false;
+    document.getElementById("rlSpinBtn").disabled = false;
+
+    // Calculate winnings
+    let totalWin = 0;
+    betKeys.forEach(k => {
+      const bet = bets[k];
+      if (bet.check(result)) {
+        totalWin += bet.amount * (1 + bet.payout);
+      }
+    });
+    const net = totalWin - totalBet;
+
+    // Update history + center display
+    rlHistory.unshift(result);
+    if (rlHistory.length > 10) rlHistory.pop();
+    renderHistory();
+    const centerEl = document.getElementById("rlCenterNum");
+    centerEl.textContent = result;
+    centerEl.className   = `rl-center-num ${colour}`;
+
+    // Show result banner immediately (optimistic)
+    showResult(result, colour, totalWin, net, totalBet);
+
+    // Save to DB — finishBet handles all balance logic
+    const mult = totalBet > 0 ? parseFloat((totalWin / totalBet).toFixed(4)) : 0;
+    finishBet("Roulette", totalBet, mult, totalWin, totalWin > 0, gdiceSpent, chipsSpent)
+      .then(() => { updateUI(); });
+
+    // Clear bets for next round
+    setTimeout(() => { clearBets(); }, 300);
+  });
+}
+
+// ── Wheel spin animation ──────────────────────────────────────
+// The SVG wheel is drawn with slice 0 starting at -90° (top).
+// Slice i centre is at: -90 + i*sliceAngle + sliceAngle/2  degrees.
+// To land the pointer (top = 0°) on slice i, we need the wheel
+// rotated so that slice centre aligns with the top.
+// Required wheel rotation = 0 - sliceCentre = 90 - i*sliceAngle - sliceAngle/2
+// We add enough full rotations for a satisfying spin effect.
+function spinWheel(targetSliceIdx, onDone) {
+  const svg        = document.getElementById("rlWheel");
+  const sliceAngle = 360 / TOTAL;
+
+  // Angle of the target slice centre relative to the wheel at rotation=0
+  const sliceCentre = -90 + targetSliceIdx * sliceAngle + sliceAngle / 2;
+  // How much we need to rotate the wheel so sliceCentre aligns with 0° (top pointer)
+  const neededRotation = ((-sliceCentre) % 360 + 360) % 360;
+  // Add extra full spins (min 5) for visual effect, always rotating forward
+  const extraSpins  = (5 + Math.floor(Math.random() * 4)) * 360;
+  // Current wheelAngle is already applied. We want to spin forward by
+  // enough to land exactly on neededRotation.
+  const currentMod  = ((wheelAngle % 360) + 360) % 360;
+  const delta       = ((neededRotation - currentMod) + 360) % 360;
+  const finalAngle  = wheelAngle + extraSpins + delta;
+
+  const duration   = 4200 + Math.random() * 800;
+  const startTime  = performance.now();
+  const startAngle = wheelAngle;
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function frame(now) {
+    const elapsed = now - startTime;
+    const t       = Math.min(elapsed / duration, 1);
+    const angle   = startAngle + (finalAngle - startAngle) * easeOut(t);
+    svg.style.transform = `rotate(${angle}deg)`;
+    if (t < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      wheelAngle = finalAngle;
+      svg.style.transform = `rotate(${finalAngle}deg)`;
+      onDone();
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+// ── Show result banner ────────────────────────────────────────
+function showResult(num, colour, totalWin, net, totalBet) {
+  const win    = totalWin > 0;
+  const numEl  = document.getElementById("rlResultNum");
+  const title  = document.getElementById("rlResultTitle");
+  const sub    = document.getElementById("rlResultSub");
+  const delta  = document.getElementById("rlResultDelta");
+  const banner = document.getElementById("rlResult");
+
+  numEl.textContent  = num;
+  numEl.className    = `rl-result-num ${colour}`;
+
+  const colLabel = colour === "red" ? "Red" : colour === "blk" ? "Black" : "Green";
+  if (win) {
+    title.textContent = "YOU WIN!";
+    title.className   = "rl-result-title win";
+    sub.textContent   = `Rolled ${num} (${colLabel}) · Won $${fmtC(totalWin)} on $${fmtC(totalBet)} bet`;
+    delta.textContent = "+" + fmtC(net);
+    delta.className   = "rl-result-delta win";
+    toast(`🎉 +${fmtC(net)} chips!`, "win");
+  } else {
+    title.textContent = "YOU LOSE";
+    title.className   = "rl-result-title lose";
+    sub.textContent   = `Rolled ${num} (${colLabel}) · Lost $${fmtC(totalBet)}`;
+    delta.textContent = "-" + fmtC(totalBet);
+    delta.className   = "rl-result-delta lose";
+    toast(`Rolled ${num} — Lost $${fmtC(totalBet)}`, "lose");
+  }
+
+  banner.classList.add("show");
+}
+
+// ── Render history strip ──────────────────────────────────────
+function renderHistory() {
+  const el = document.getElementById("rlHistory");
+  el.innerHTML = rlHistory.map(n => {
+    const c = numColour(n);
+    return `<div class="rl-hist-num ${c}">${n}</div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>
